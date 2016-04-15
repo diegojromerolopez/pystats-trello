@@ -1,5 +1,5 @@
 CairoSVG==1.0.20
-Unidecode==0.4.19
+Unidecode==0.04.19
 appnope==0.1.0
 cairocffi==0.7.2
 cffi==1.5.2
@@ -12,6 +12,7 @@ idna==2.1
 ipaddress==1.0.16
 ipython==4.1.2
 ipython-genutils==0.1.0
+lxml==3.6.0
 ndg-httpsclient==0.4.0
 numpy==1.11.0
 oauthlib==1.0.3
@@ -19,7 +20,7 @@ pathlib2==2.1.0
 pexpect==4.0.1
 pickleshare==0.7.2
 ptyprocess==0.5.1
--e git://github.com/diegojromerolopez/py-trello.git@4cf5843#egg=py_trello
+-e git://github.com/diegojromerolopez/py-trello.git@4cf58437d2e4df65698c19033dabbf587009d796#egg=py_trello-origin/card-time-by-column
 pyOpenSSL==16.0.0
 pyasn1==0.1.9
 pycparser==2.14
