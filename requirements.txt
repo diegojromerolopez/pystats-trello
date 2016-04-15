@@ -1,4 +1,5 @@
 CairoSVG==1.0.20
+Unidecode==0.4.19
 appnope==0.1.0
 cairocffi==0.7.2
 cffi==1.5.2
@@ -18,11 +19,13 @@ pathlib2==2.1.0
 pexpect==4.0.1
 pickleshare==0.7.2
 ptyprocess==0.5.1
+-e git://github.com/diegojromerolopez/py-trello.git@f77239181e328ad00a5fa57e2be6c5de03878630#egg=py_trello
 pyOpenSSL==16.0.0
 pyasn1==0.1.9
 pycparser==2.14
 pygal==2.1.1
 python-dateutil==2.5.2
+python-slugify==1.2.0
 pytz==2016.3
 requests==2.9.1
 requests-oauthlib==0.6.1
@@ -31,7 +34,3 @@ six==1.10.0
 tinycss==0.3
 traitlets==4.2.1
 wsgiref==0.1.2
--e git://github.com/diegojromerolopez/py-trello.git@f7c235b65fe93c493d1718faa3fdf7a4ede960d9#egg=py-trello
-
-
-
