@@ -29,6 +29,12 @@ Time from start to end ("Done" state).
 
 Time a client has to wait to see a feature he/she asked.
 
+# Installation
+
+Create a virtualenv and install requirements.txt there.
+
+Activate the **virtualenv** and follow next steps.
+
 
 # Configuration
 
