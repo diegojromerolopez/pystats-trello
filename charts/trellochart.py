@@ -27,7 +27,7 @@ def get_time_by_list_chart(board_name, lists, time_by_list):
     line_chart = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
 
     i = 1
-    for list_id, list_ in lists.items():
+    for list_ in lists:
         list_name = list_.name.decode("utf-8")
         line_chart.add(list_name, time_by_list["avg"][list_.id])
         i += 1

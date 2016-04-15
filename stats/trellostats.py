@@ -27,7 +27,7 @@ def get_stats_by_board(board):
         std_dev_time_by_list[list_name] = numpy.std(list_times, axis=0)
 
     stats = {
-        "lists": {list_.id: list_ for list_ in lists},
+        "lists": lists,
         "time_by_list": {"avg": avg_time_by_list, "std_dev": std_dev_time_by_list},
         "lead_time": {"avg": numpy.mean(times["lead_time"]), "std_dev": numpy.std(times["lead_time"], axis=0)},
         "cycle_time": {"avg": numpy.mean(times["cycle_time"]), "std_dev": numpy.std(times["cycle_time"], axis=0)},
@@ -43,7 +43,7 @@ def get_times_by_board(board):
     last_list = lists[-1]
 
     # Lists that play a role in the computation of cycle time
-    cycle_lists_dict = {_list.name.decode("utf-8"): True for _list in get_cycle_lists(board, lists)}
+    cycle_lists_dict = {list_.id: True for list_ in get_cycle_lists(board, lists)}
 
     # Each one of the time of each card in each list
     time_by_list = {list_.id: [] for list_ in lists}
