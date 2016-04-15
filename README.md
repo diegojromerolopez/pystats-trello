@@ -32,7 +32,7 @@ Time a client has to wait to see a feature he/she asked.
 
 # How to use it
 
-python```
+```python
 stats.trellostats.get_stats
 ```
 
