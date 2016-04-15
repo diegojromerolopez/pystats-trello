@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pygal
+import settings
 
 
 def get_graphics(stats, board_name, file_path=None):
@@ -17,19 +18,19 @@ def get_graphics(stats, board_name, file_path=None):
     # Time by list
     chart_title = u"Average time in each list for {0}".format(board_name)
     time_by_list_chart_ = avg_by_list_chart(chart_title, lists, stats, "time_by_list")
-    file_path = u"./{0}-time_by_list.svg".format(board_name)
+    file_path = u"./{0}/{1}-time_by_list.svg".format(settings.OUTPUT_DIR, board_name)
     time_by_list_chart_.render_to_file(file_path)
 
     # Forward by list
     chart_title = u"Number of times a list is the source of a card forward movement in {0}".format(board_name)
     forward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "forward_movements_by_list")
-    file_path = u"./{0}-forward_movements_by_list.svg".format(board_name)
+    file_path = u"./{0}/{1}-forward_movements_by_list.svg".format(settings.OUTPUT_DIR, board_name)
     forward_by_list_chart_.render_to_file(file_path)
 
     # Backwards by list
     chart_title = u"Number of times a list is the source of a card movement to backwards in {0}".format(board_name)
     backward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "backward_movements_by_list")
-    file_path = u"./{0}-backward_movements_by_list.svg".format(board_name)
+    file_path = u"./{0}/{1}-backward_movements_by_list.svg".format(settings.OUTPUT_DIR, board_name)
     backward_by_list_chart_.render_to_file(file_path)
 
     return {"time": time_by_list_chart_, "forward":forward_by_list_chart_, "backward":backward_by_list_chart_}

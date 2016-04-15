@@ -65,6 +65,9 @@ target/
 # Local configuration
 settings_local.py
 
+# Output directory
+out/*
+
 # MacOS
 .DS_Store
 

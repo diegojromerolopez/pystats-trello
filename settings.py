@@ -8,7 +8,7 @@ TIMEZONE = pytz.timezone('Europe/Madrid')
 try:
     settings_local = importlib.import_module('settings_local')
 except ImportError:
-    print("Please, create a local_settings.py with authentication data")
+    print("Please, create a local_settings.py with authentication data and other preferences")
     exit(-1)
 
 TRELLO_API_KEY = settings_local.TRELLO_API_KEY
@@ -21,4 +21,4 @@ DEVELOPMENT_LIST = settings_local.DEVELOPMENT_LIST
 
 TEST_BOARD = settings_local.TEST_BOARD
 
-
+OUTPUT_DIR = settings_local.OUTPUT_DIR

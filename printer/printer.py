@@ -22,6 +22,6 @@ class Printer(object):
 
     def flush(self):
         now_str = datetime.datetime.now(settings.TIMEZONE).strftime("%Y_%m_%d_%H_%M_%S")
-        output_filename = u"{0} {1}.txt".format(slugify(self.filename), now_str)
+        output_filename = u"./{0}/{1}-{2}.txt".format(settings.OUTPUT_DIR, slugify(self.filename), now_str)
         with open(output_filename, "w") as output_file:
             output_file.write(self.string.encode('utf8'))
