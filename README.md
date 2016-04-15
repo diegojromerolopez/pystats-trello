@@ -69,5 +69,11 @@ python stats_extractor.py <board_name>
 
 ```
 
+returns a summary of stats of the board_name.
 
-returns the status of the board. See test.py for more details.
+
+# Questions? Suggestions?
+
+Don't hesitate to contact me, write me to diegojREMOVETHISromeroREMOVETHISlopez@REMOVETHISgmail.REMOVETHIScom.
+
+(remove REMOVETHIS to see the real email address)
