@@ -1,0 +1,52 @@
+
+
+Measurements for <BOARD NAME>
+# Average time in each column for all the board cards
+- <FIRST LIST>: 73.4387051891 h (std. dev. 106.33171547)
+- <SECOND LIST>: 25.3126597292 h (std. dev. 69.3462270022)
+- <THIRD LIST>: 21.6415455998 h (std. dev. 61.0820214377)
+- <FOURTH LIST, IN DEVELOPMENT>: 11.7510035088 h (std. dev. 67.1504977019)
+- <FIFTH LIST>: 10.9497624599 h (std. dev. 33.5023320017)
+- <SIXTH LIST>: 0.44378651136 h (std. dev. 1.88164827387)
+- <SEVENTH LIST>: 153.489937324 h (std. dev. 190.628476149)
+- <EIGHTH LIST, DONE>: 0.0 h (std. dev. 0.0)
+
+
+# Sum of forward/backward movements by source column for all the cards
+- <FIRST LIST>
+  - Forward movements: 21
+  - Backward movements: 0
+- <SECOND LIST>
+  - Forward movements: 3
+  - Backward movements: 1
+- <THIRD LIST>
+  - Forward movements: 9
+  - Backward movements: 1
+- <FOURTH LIST, IN DEVELOPMENT>
+  - Forward movements: 10
+  - Backward movements: 1
+- <FIFTH LIST>
+  - Forward movements: 8
+  - Backward movements: 0
+- <SIXTH LIST>
+  - Forward movements: 6
+  - Backward movements: 0
+- <SEVENTH LIST>
+  - Forward movements: 2
+  - Backward movements: 6
+- <EIGHTH LIST, DONE>
+  - Forward movements: 0
+  - Backward movements: 0
+
+
+# Cycle
+Time between development state and reaching 'Done' state.
+- avg: 87.88505 h, std_dev: 70.4038598361
+# Lead
+Time from start to end ('Done' state).
+- avg: 91.6390803279 h, std_dev: 70.837852459
+
+
+Chart with average card time in each list created in <pygal.graph.horizontalbar.HorizontalBar object at 0x10bce69d0>
+Chart with average time a list is a forward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x10cc550d0>
+Chart with average time a list is a backward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x10bd2fd50>
