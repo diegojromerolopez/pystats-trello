@@ -12,24 +12,46 @@ def get_graphics(stats, board_name, file_path=None):
     :return:
     """
 
-    if not file_path:
-        file_path = u"./{0}-time-by-list.svg".format(board_name)
+    lists = stats["lists"]
 
-    time_by_list_chart = get_time_by_list_chart(board_name, stats["lists"], stats["time_by_list"])
-    time_by_list_chart.render_to_file(file_path)
+    # Time by list
+    chart_title = u"Average time in each list for {0}".format(board_name)
+    time_by_list_chart_ = avg_by_list_chart(chart_title, lists, stats, "time_by_list")
+    file_path = u"./{0}-time_by_list.svg".format(board_name)
+    time_by_list_chart_.render_to_file(file_path)
 
-    return file_path
+    # Forward by list
+    chart_title = u"Number of times a list is the source of a card forward movement in {0}".format(board_name)
+    forward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "forward_movements_by_list")
+    file_path = u"./{0}-forward_movements_by_list.svg".format(board_name)
+    forward_by_list_chart_.render_to_file(file_path)
+
+    # Backwards by list
+    chart_title = u"Number of times a list is the source of a card movement to backwards in {0}".format(board_name)
+    backward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "backward_movements_by_list")
+    file_path = u"./{0}-backward_movements_by_list.svg".format(board_name)
+    backward_by_list_chart_.render_to_file(file_path)
+
+    return {"time": time_by_list_chart_, "forward":forward_by_list_chart_, "backward":backward_by_list_chart_}
 
 
-def get_time_by_list_chart(board_name, lists, time_by_list):
-    # Graphic showing the average stance in each column for all cards
-    chart_title = u'{0} average card list times'.format(board_name)
+def avg_by_list_chart(chart_title, lists, stats, measurement):
     line_chart = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
 
     i = 1
     for list_ in lists:
         list_name = list_.name.decode("utf-8")
-        line_chart.add(list_name, time_by_list["avg"][list_.id])
+        line_chart.add(list_name, stats[measurement][list_.id]["avg"])
         i += 1
     return line_chart
 
+
+def number_by_list_chart(chart_title, lists, stats, measurement):
+    line_chart = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
+
+    i = 1
+    for list_ in lists:
+        list_name = list_.name.decode("utf-8")
+        line_chart.add(list_name, stats[measurement][list_.id])
+        i += 1
+    return line_chart

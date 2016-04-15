@@ -10,34 +10,57 @@ def get_stats(client, board_name):
     boards = client.list_boards()
     for board in boards:
         if board.name.decode("utf-8") == board_name:
-            return get_stats_by_board(board)
+            return get_statistic_summary_by_board(board)
 
     return None
 
 
-def get_stats_by_board(board):
+def get_statistic_summary_by_board(board):
+
+    def statistic_summary(value_list):
+        return {"avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
+
+    def statistic_summary_by_list(stat_by_list):
+        stats_summary_by_list = {}
+        for list_name_, list_times_ in stat_by_list.items():
+            stats_summary_by_list[list_name_] = statistic_summary(list_times_)
+
+        return stats_summary_by_list
+
     lists = board.all_lists()
-    times = get_times_by_board(board)
-    time_by_list = times["time_by_list"]
+    stats = get_stats_by_board(board)
 
-    avg_time_by_list = {}
-    std_dev_time_by_list = {}
-    for list_name, list_times in time_by_list.items():
-        avg_time_by_list[list_name] = numpy.mean(list_times)
-        std_dev_time_by_list[list_name] = numpy.std(list_times, axis=0)
-
-    stats = {
+    return {
         "lists": lists,
-        "time_by_list": {"avg": avg_time_by_list, "std_dev": std_dev_time_by_list},
-        "lead_time": {"avg": numpy.mean(times["lead_time"]), "std_dev": numpy.std(times["lead_time"], axis=0)},
-        "cycle_time": {"avg": numpy.mean(times["cycle_time"]), "std_dev": numpy.std(times["cycle_time"], axis=0)},
+        "cards": stats["cards"],
+        "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
+        "backward_movements_by_list": stats["backward_movements_by_list"],
+        "forward_movements_by_list": stats["forward_movements_by_list"],
+        "lead_time": statistic_summary(stats["lead_time"]),
+        "cycle_time": statistic_summary(stats["cycle_time"])
     }
-    return stats
 
 
-def get_times_by_board(board):
+def get_stats_by_board(board):
     # All the lists of a board
     lists = board.all_lists()
+
+    # Compute list orders
+    i = 1
+    for list_ in lists:
+        list_.order = i
+        i += 1
+
+    lists_dict = {list_.id : list_ for list_ in lists}
+
+    # Comparison function used to compute forward and backward movements
+    # when computing card.stats_by_list
+    def list_cmp(list_a_id, list_b_id):
+        if lists_dict[list_b_id].order > lists_dict[list_a_id].order:
+            return 1
+        if lists_dict[list_b_id].order < lists_dict[list_a_id].order:
+            return -1
+        return 0
 
     # The last list is "Done" list. It is used to check if the card is done.
     last_list = lists[-1]
@@ -48,6 +71,9 @@ def get_times_by_board(board):
     # Each one of the time of each card in each list
     time_by_list = {list_.id: [] for list_ in lists}
 
+    forward_list = {list_.id: 0 for list_ in lists}
+    backward_list = {list_.id: 0 for list_ in lists}
+
     cycle_time = []
     lead_time = []
 
@@ -56,27 +82,26 @@ def get_times_by_board(board):
     i = 1
     for card in cards:
         print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
-
-        card.time_by_list = card.get_time_by_list(done_list=last_list, tz=settings.TIMEZONE, time_unit="hours")
-
-        # Add zero time of columns this card has not been yet
-        for list_ in lists:
-            if not list_.id in card.time_by_list:
-                card.time_by_list[list_.id] = 0
+        card.stats_by_list = card.get_stats_by_list(lists=lists, list_cmp=list_cmp, done_list=last_list, tz=settings.TIMEZONE, time_unit="hours")
 
         # If the card is done, compute lead and cycle time
         if card.idList == last_list.id:
             #  Lead time (time between creation in board to reaching "Done" state)
-            card.lead_time = sum([time_ for list_, time_ in card.time_by_list.items()])
+            card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
             lead_time.append(card.lead_time)
             # Cycle time (time between development and reaching "Done" state)
             card.cycle_time = sum(
-                [time_ if list_ in cycle_lists_dict else 0 for list_, time_ in card.time_by_list.items()])
+                [list_stats["time"] if list_id in cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
+            )
             cycle_time.append(card.cycle_time)
 
-        # Add this card time to global time by list
+        # Add this card stats to each global stat
         for list_ in lists:
-            time_by_list[list_.id].append(card.time_by_list[list_.id])
+            list_id = list_.id
+            card_list_stats = card.stats_by_list[list_id]
+            time_by_list[list_id].append(card_list_stats["time"])
+            forward_list[list_id] += card_list_stats["forward_moves"]
+            backward_list[list_id] += card_list_stats["backward_moves"]
 
         i += 1
 
@@ -84,6 +109,8 @@ def get_times_by_board(board):
         "lists": lists,
         "cards": cards,
         "time_by_list": time_by_list,
+        "backward_movements_by_list": backward_list,
+        "forward_movements_by_list": forward_list,
         "lead_time": lead_time,
         "cycle_time": cycle_time
     }
