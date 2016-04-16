@@ -117,13 +117,13 @@ class TrelloStatsExtractor(object):
     # The other metrics are absolute values.
     def get_stats(self, card_is_active_function=lambda c: True):
 
-        def statistic_summary(value_list):
-            return {"avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
+        def add_statistic_summary(value_list):
+            return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
 
         def statistic_summary_by_list(stat_by_list):
             stats_summary_by_list = {}
             for list_name_, list_times_ in stat_by_list.items():
-                stats_summary_by_list[list_name_] = statistic_summary(list_times_)
+                stats_summary_by_list[list_name_] = add_statistic_summary(list_times_)
 
             return stats_summary_by_list
 
@@ -133,8 +133,8 @@ class TrelloStatsExtractor(object):
         stats.update(
             {
                 "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
-                "lead_time": statistic_summary(stats["lead_time"]),
-                "cycle_time": statistic_summary(stats["cycle_time"])
+                "lead_time": add_statistic_summary(stats["lead_time"]),
+                "cycle_time": add_statistic_summary(stats["cycle_time"])
             }
         )
 
@@ -151,11 +151,14 @@ class TrelloStatsExtractor(object):
         # Each one of the time of each card in each list
         time_by_list = {list_.id: [] for list_ in self.lists}
 
+        # Forward or backward movements
         forward_list = {list_.id: 0 for list_ in self.lists}
         backward_list = {list_.id: 0 for list_ in self.lists}
 
         cycle_time = []
         lead_time = []
+
+        card_stats_by_list = {}
 
         # Active cards by our definition given by the lambda function
         active_cards = []
@@ -195,6 +198,7 @@ class TrelloStatsExtractor(object):
             if card_is_active_function(card):
                 print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
                 card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list, tz=settings.TIMEZONE, time_unit="hours")
+                card_stats_by_list[card.id] = card.stats_by_list
 
                 # If the card is done, compute lead and cycle time
                 if card_is_done(card):
@@ -211,10 +215,10 @@ class TrelloStatsExtractor(object):
                 # Add this card stats to each global stat
                 for list_ in self.lists:
                     list_id = list_.id
-                    card_list_stats = card.stats_by_list[list_id]
-                    time_by_list[list_id].append(card_list_stats["time"])
-                    forward_list[list_id] += card_list_stats["forward_moves"]
-                    backward_list[list_id] += card_list_stats["backward_moves"]
+                    card_stats_by_list = card.stats_by_list[list_id]
+                    time_by_list[list_id].append(card_stats_by_list["time"])
+                    forward_list[list_id] += card_stats_by_list["forward_moves"]
+                    backward_list[list_id] += card_stats_by_list["backward_moves"]
 
                 # Card creation datetime
                 card_creation_datetimes.append(card.create_date)
@@ -241,6 +245,7 @@ class TrelloStatsExtractor(object):
         stats = {
             "lists": self.lists,
             "cards": self.cards,
+            "active_card_stats_by_list": {card.id: card.stats_by_list for card in active_cards},
             "active_cards": active_cards,
             "done_inactive_cards": done_inactive_cards,
             "inactive_cards": inactive_cards,

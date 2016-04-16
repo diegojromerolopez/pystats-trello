@@ -78,6 +78,23 @@ def make(trello_connector, board_name):
 
     printer.newline()
 
+    # Time each card has been in each column
+    printer.p(u"# Time each card has been in each column (hours)")
+
+    lists_header = u""
+    for list_ in stats["lists"]:
+        lists_header += list_.name.decode("utf-8") + (", " if list_.id != stats["lists"][-1].id else "")
+
+    printer.p(u"{0} {1} {2}".format(u"Card_id", u"Card_name", lists_header))
+
+    for card in stats["active_cards"]:
+        card_line = u""
+        for list_ in stats["lists"]:
+            card_line += u"{0}{1}".format(stats["active_card_stats_by_list"][card.id][list_.id]["time"], (", " if list_.id != stats["lists"][-1].id else ""))
+        printer.p(u"- {0} '{1}': {2}".format(card.id, card.name.decode("utf-8")[0:30]+u"...", card_line))
+
+    printer.newline()
+
     printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]))
     printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]))
     printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]))
