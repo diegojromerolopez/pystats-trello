@@ -83,6 +83,9 @@ def get_stats_by_board(board, card_is_active_function):
     # We store card_creation_datetimes to extract min datetime
     card_creation_datetimes = []
 
+    # Board last activity to computer board life time
+    board_last_activity = None
+
     cards = board.all_cards()
     num_cards = len(cards)
     i = 1
@@ -115,12 +118,16 @@ def get_stats_by_board(board, card_is_active_function):
             # Card creation datetime
             card_creation_datetimes.append(card.create_date)
 
+            # Getting the last activity in the board
+            if board_last_activity is None or board_last_activity < card.date_last_activity:
+                board_last_activity = card.date_last_activity
+
         i += 1
 
     now = datetime.datetime.now(settings.TIMEZONE)
     first_card_creation_datetime = min(card_creation_datetimes)
     last_card_creation_datetime = max(card_creation_datetimes)
-    board_life_time = (last_card_creation_datetime - first_card_creation_datetime).total_seconds()
+    board_life_time = (board_last_activity - first_card_creation_datetime).total_seconds()
 
     stats = {
         "lists": lists,
@@ -129,6 +136,7 @@ def get_stats_by_board(board, card_is_active_function):
         "done_cards_per_hour": len(done_cards) / (board_life_time/60.0),
         "done_cards_per_day": len(done_cards)/(board_life_time/3600.0),
         "board_life_time": board_life_time / 60.0,
+        "board_last_activity": board_last_activity,
         "last_card_creation": last_card_creation_datetime,
         "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
         "time_by_list": time_by_list,

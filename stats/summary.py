@@ -20,7 +20,10 @@ def make(client, board_name):
     printer = Printer(u"results_for_{0}_board".format(board_name))
 
     printer.newline()
+
     printer.p(u"# Measurements for {0}".format(board_name))
+
+    printer.newline()
 
     # Board life time
     printer.p(u"## General measurements for {0}".format(board_name))
@@ -31,6 +34,8 @@ def make(client, board_name):
     printer.p(u"- There are {0} tasks".format(len(stats["cards"])))
     printer.p(u"- There are {0} tasks in 'done'".format(len(stats["done_cards"])))
     printer.p(u"- {0} tasks per day or {1} tasks per hour".format(stats["done_cards_per_day"], stats["done_cards_per_hour"]))
+
+    printer.newline()
 
     # Average time in each column for all the cards
     printer.p(u"## Average time in each column for all the board cards")
@@ -70,8 +75,13 @@ def make(client, board_name):
     file_paths = trellochart.get_graphics(stats, board_name=board_name)
 
     printer.newline()
+
     printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]))
     printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]))
     printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]))
+
+    printer.newline()
+
+    printer.p(u"--- END OF FILE ---")
 
     printer.flush()
