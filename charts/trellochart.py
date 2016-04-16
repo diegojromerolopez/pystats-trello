@@ -4,7 +4,7 @@ import pygal
 import settings
 
 
-def get_graphics(stats, board_name, file_path=None):
+def get_graphics(stats, board_name):
     """
     Prints a chart with the average time a card is in each column.
     :param stats: statistics generated with trellostats

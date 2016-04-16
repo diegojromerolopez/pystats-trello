@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import numpy
 import settings
 from stats.debug import print_card
 
 
-def get_stats(client, board_name):
+def get_stats(client, board_name, card_is_active_function=lambda c: True):
 
     boards = client.list_boards()
     for board in boards:
         if board.name.decode("utf-8") == board_name:
-            return get_statistic_summary_by_board(board)
+            return get_statistic_summary_by_board(board, card_is_active_function)
 
     return None
 
 
-def get_statistic_summary_by_board(board):
+def get_statistic_summary_by_board(board, card_is_active_function):
 
     def statistic_summary(value_list):
         return {"avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
@@ -27,21 +28,20 @@ def get_statistic_summary_by_board(board):
 
         return stats_summary_by_list
 
-    lists = board.all_lists()
-    stats = get_stats_by_board(board)
+    stats = get_stats_by_board(board, card_is_active_function)
 
-    return {
-        "lists": lists,
-        "cards": stats["cards"],
-        "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
-        "backward_movements_by_list": stats["backward_movements_by_list"],
-        "forward_movements_by_list": stats["forward_movements_by_list"],
-        "lead_time": statistic_summary(stats["lead_time"]),
-        "cycle_time": statistic_summary(stats["cycle_time"])
-    }
+    stats.update(
+        {
+            "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
+            "lead_time": statistic_summary(stats["lead_time"]),
+            "cycle_time": statistic_summary(stats["cycle_time"])
+        }
+    )
+
+    return stats
 
 
-def get_stats_by_board(board):
+def get_stats_by_board(board, card_is_active_function):
     # All the lists of a board
     lists = board.all_lists()
 
@@ -77,37 +77,60 @@ def get_stats_by_board(board):
     cycle_time = []
     lead_time = []
 
+    # Done cards
+    done_cards = []
+
+    # We store card_creation_datetimes to extract min datetime
+    card_creation_datetimes = []
+
     cards = board.all_cards()
     num_cards = len(cards)
     i = 1
     for card in cards:
-        print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
-        card.stats_by_list = card.get_stats_by_list(lists=lists, list_cmp=list_cmp, done_list=last_list, tz=settings.TIMEZONE, time_unit="hours")
+        # Custom filter for only considering cards we want
+        if card_is_active_function(card):
+            print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
+            card.stats_by_list = card.get_stats_by_list(lists=lists, list_cmp=list_cmp, done_list=last_list, tz=settings.TIMEZONE, time_unit="hours")
 
-        # If the card is done, compute lead and cycle time
-        if card.idList == last_list.id:
-            #  Lead time (time between creation in board to reaching "Done" state)
-            card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
-            lead_time.append(card.lead_time)
-            # Cycle time (time between development and reaching "Done" state)
-            card.cycle_time = sum(
-                [list_stats["time"] if list_id in cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
-            )
-            cycle_time.append(card.cycle_time)
+            # If the card is done, compute lead and cycle time
+            if card.idList == last_list.id:
+                #  Lead time (time between creation in board to reaching "Done" state)
+                card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
+                lead_time.append(card.lead_time)
+                # Cycle time (time between development and reaching "Done" state)
+                card.cycle_time = sum(
+                    [list_stats["time"] if list_id in cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
+                )
+                cycle_time.append(card.cycle_time)
+                done_cards.append(card)
 
-        # Add this card stats to each global stat
-        for list_ in lists:
-            list_id = list_.id
-            card_list_stats = card.stats_by_list[list_id]
-            time_by_list[list_id].append(card_list_stats["time"])
-            forward_list[list_id] += card_list_stats["forward_moves"]
-            backward_list[list_id] += card_list_stats["backward_moves"]
+            # Add this card stats to each global stat
+            for list_ in lists:
+                list_id = list_.id
+                card_list_stats = card.stats_by_list[list_id]
+                time_by_list[list_id].append(card_list_stats["time"])
+                forward_list[list_id] += card_list_stats["forward_moves"]
+                backward_list[list_id] += card_list_stats["backward_moves"]
+
+            # Card creation datetime
+            card_creation_datetimes.append(card.create_date)
 
         i += 1
+
+    now = datetime.datetime.now(settings.TIMEZONE)
+    first_card_creation_datetime = min(card_creation_datetimes)
+    last_card_creation_datetime = max(card_creation_datetimes)
+    board_life_time = (last_card_creation_datetime - first_card_creation_datetime).total_seconds()
 
     stats = {
         "lists": lists,
         "cards": cards,
+        "done_cards": done_cards,
+        "done_cards_per_hour": len(done_cards) / (board_life_time/60.0),
+        "done_cards_per_day": len(done_cards)/(board_life_time/3600.0),
+        "board_life_time": board_life_time / 60.0,
+        "last_card_creation": last_card_creation_datetime,
+        "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
         "time_by_list": time_by_list,
         "backward_movements_by_list": backward_list,
         "forward_movements_by_list": forward_list,

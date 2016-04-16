@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
 
+import settings
 from charts import trellochart
 from printer.printer import Printer
 from stats import trellostats
@@ -13,15 +15,25 @@ def make(client, board_name):
     :param board_name: Name of the board.
     """
 
-    stats = trellostats.get_stats(client, board_name=board_name)
+    stats = trellostats.get_stats(client, board_name=board_name, card_is_active_function=lambda c: not c.closed)
 
     printer = Printer(u"results_for_{0}_board".format(board_name))
 
     printer.newline()
-    printer.p(u"Measurements for {0}".format(board_name))
+    printer.p(u"# Measurements for {0}".format(board_name))
+
+    # Board life time
+    printer.p(u"## General measurements for {0}".format(board_name))
+    printer.p(u"- The board is {0} hours old".format(stats["board_life_time"]))
+    printer.p(u"- Last card was created {0} hours ago".format(stats["last_card_creation_ago"]/3600.0))
+
+    # Task number
+    printer.p(u"- There are {0} tasks".format(len(stats["cards"])))
+    printer.p(u"- There are {0} tasks in 'done'".format(len(stats["done_cards"])))
+    printer.p(u"- {0} tasks per day or {1} tasks per hour".format(stats["done_cards_per_day"], stats["done_cards_per_hour"]))
 
     # Average time in each column for all the cards
-    printer.p(u"# Average time in each column for all the board cards")
+    printer.p(u"## Average time in each column for all the board cards")
     for list_ in stats["lists"]:
         list_id = list_.id
         list_name = list_.name.decode("utf-8")
@@ -32,7 +44,7 @@ def make(client, board_name):
     printer.newline()
 
     # Forward/backward movements by column for all the cards
-    printer.p(u"# Sum of forward/backward movements by source column for all the cards")
+    printer.p(u"## Sum of forward/backward movements by source column for all the cards")
     for list_ in stats["lists"]:
         list_id = list_.id
         list_name = list_.name.decode("utf-8")
@@ -45,12 +57,12 @@ def make(client, board_name):
     printer.newline()
 
     # Cycle time
-    printer.p(u"# Cycle")
+    printer.p(u"## Cycle")
     printer.p(u"Time between development state and reaching 'Done' state.")
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["cycle_time"]["avg"], stats["cycle_time"]["std_dev"]))
 
     # Lead time
-    printer.p(u"# Lead")
+    printer.p(u"## Lead")
     printer.p(u"Time from start to end ('Done' state).")
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["lead_time"]["avg"], stats["lead_time"]["std_dev"]))
 
