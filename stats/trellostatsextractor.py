@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import datetime
 import numpy
 import settings
@@ -74,7 +73,7 @@ class TrelloStatsExtractor(object):
         # By default, the last list is the "done list"
         self.done_list = self.lists[-1]
 
-        # But we could have specifierd another one
+        # But we could have specified another one
         if hasattr(settings, "DONE_LIST"):
             if self.board_name in settings.DONE_LIST:
                 self.done_list = self.lists_dict_by_name[settings.DONE_LIST[self.board_name]]
@@ -105,9 +104,9 @@ class TrelloStatsExtractor(object):
                 self.cycle_lists.append(_list)
                 self.cycle_lists_dict[_list.id] = _list
 
-            if len(self.cycle_lists) <= 1:
-                raise EnvironmentError(
-                    u"Development list has not been configured for board {0}".format(self.board_name))
+        # If there is no cycle lists, assume the configuration is wrong
+        if len(self.cycle_lists) <= 1:
+            raise EnvironmentError(u"Development list has not been configured for board {0}".format(self.board_name))
 
     # Initializes the cards
     def _init_cards(self):
@@ -141,9 +140,8 @@ class TrelloStatsExtractor(object):
 
         return stats
 
-
     # Compute the full stats of the board.
-    #That is, it computes the concrete values for each measure.
+    # That is, it computes the concrete values for each measure.
     def get_full_stats(self, card_is_active_function):
 
         # Utility function that check if a card is done
@@ -164,6 +162,7 @@ class TrelloStatsExtractor(object):
 
         # Cards that are not active
         inactive_cards = []
+        done_inactive_cards = []
 
         # Closed cards
         closed_cards = []
@@ -229,6 +228,8 @@ class TrelloStatsExtractor(object):
             # Inactive cards
             else:
                 inactive_cards.append(card)
+                if card_is_done(card):
+                    done_inactive_cards.append(card)
 
             i += 1
 
@@ -238,7 +239,10 @@ class TrelloStatsExtractor(object):
         board_life_time = (board_last_activity - first_card_creation_datetime).total_seconds()
 
         stats = {
+            "lists": self.lists,
+            "cards": self.cards,
             "active_cards": active_cards,
+            "done_inactive_cards": done_inactive_cards,
             "inactive_cards": inactive_cards,
             "closed_cards": closed_cards,
             "closed_done_cards": closed_done_cards,

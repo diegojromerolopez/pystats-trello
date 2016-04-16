@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 import settings
 from auth.connector import TrelloConnector
 from stats import summary

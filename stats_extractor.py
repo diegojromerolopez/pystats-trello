@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import settings
+from auth.connector import TrelloConnector
 from stats import summary
 from auth import connector
 import sys
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     token = settings.TRELLO_TOKEN
     token_secret = settings.TRELLO_TOKEN_SECRET
 
-    client = connector.connect(api_key, api_secret, token, token_secret)
+    trello_connector = TrelloConnector(api_key, api_secret, token, token_secret)
 
-    summary.make(client, board_name)
+    summary.make(trello_connector, board_name)
 

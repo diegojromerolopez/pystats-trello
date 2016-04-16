@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from charts import trellochart
 from printer.printer import Printer
 from stats import trellostatsextractor
+import inspect
+
+
 
 
 def make(trello_connector, board_name):
@@ -15,7 +17,8 @@ def make(trello_connector, board_name):
 
     stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
 
-    stats = stat_extractor.get_stats(card_is_active_function=lambda c: not c.closed)
+    card_is_active_function = lambda c: not c.closed
+    stats = stat_extractor.get_stats(card_is_active_function=card_is_active_function)
 
     printer = Printer(u"results_for_{0}_board".format(board_name))
 
@@ -31,9 +34,10 @@ def make(trello_connector, board_name):
     printer.p(u"- Last card was created {0} hours ago".format(stats["last_card_creation_ago"]/3600.0))
 
     # Task number
-    printer.p(u"- There are {0} tasks".format(len(stats["cards"])))
-    printer.p(u"- There are {0} tasks in 'done'".format(len(stats["done_cards"])))
+    printer.p(u"- There are {0} tasks ({1} active / {2} inactive [see note 1]) (".format(len(stats["cards"]), len(stats["active_cards"]), len(stats["inactive_cards"])))
+    printer.p(u"- There are {0} tasks in 'done' ({1} are inactive [see note 1])".format(len(stats["done_cards"]), len(stats["done_inactive_cards"])))
     printer.p(u"- {0} tasks per day or {1} tasks per hour".format(stats["done_cards_per_day"], stats["done_cards_per_hour"]))
+    printer.p(u"[note 1]: A card is active if meets this criterion: {0}".format(inspect.getsource(card_is_active_function)))
 
     printer.newline()
 
