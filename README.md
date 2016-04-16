@@ -95,6 +95,10 @@ returns a summary of stats of the board_name.
 
 See output example file in [example result file](result-examples/results-for-board-example-datetime.txt).
 
+This is the card time by list chart:
+
+![Average time by list for board cards](result-examples/results-time-by-list-example.png)
+
 # Questions? Suggestions?
 
 Don't hesitate to contact me, write me to diegojREMOVETHISromeroREMOVETHISlopez@REMOVETHISgmail.REMOVETHIScom.
