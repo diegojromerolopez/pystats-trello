@@ -1,0 +1,67 @@
+
+
+# Measurements for <BOARD_NAME>
+
+
+## General measurements for <BOARD_NAME>
+- The board is 38801.2637167 hours old
+- Last card was created 52.6774282236 hours ago
+- There are 38 tasks (37 active / 1 inactive [see note 1]) (
+- There are 2 tasks in 'done' (0 are inactive [see note 1])
+- 0.00309268277642 tasks per day or 5.15447129404e-05 tasks per hour
+[note 1]: A card is active if meets this criterion:     card_is_active_function = lambda c: not c.closed
+
+
+
+## Average time in each column for all the board cards
+- <FIRST_LIST_NAME>: 69.697487654 h (std. dev. 96.4563849404)
+- <SECOND_LIST_NAME>: 28.8664335853 h (std. dev. 75.7254666017)
+- <THIRD_LIST_NAME>: 22.7047418514 h (std. dev. 64.282343005)
+- <FOURTH_LIST_NAME>: 12.0685981982 h (std. dev. 68.0237194008)
+- <FIFTH_LIST_NAME>: 11.7240026484 h (std. dev. 35.0341415652)
+- <SIXTH_LIST_NAME>: 0.455780741397 h (std. dev. 1.90547248354)
+- <SEVENTH_LIST_NAME>: 165.291794194 h (std. dev. 199.017376503)
+- <DONE_LIST_NAME>: 0.0 h (std. dev. 0.0)
+
+
+## Sum of forward/backward movements by source column for all the cards
+- <FIRST_LIST_NAME>
+  - Forward movements: 21
+  - Backward movements: 0
+- <SECOND_LIST_NAME>
+  - Forward movements: 3
+  - Backward movements: 1
+- <THIRD_LIST_NAME>
+  - Forward movements: 9
+  - Backward movements: 1
+- <FOURTH_LIST_NAME>
+  - Forward movements: 10
+  - Backward movements: 1
+- <FIFTH_LIST_NAME>
+  - Forward movements: 8
+  - Backward movements: 0
+- <SIXTH_LIST_NAME>
+  - Forward movements: 6
+  - Backward movements: 0
+- <SEVENTH_LIST_NAME>
+  - Forward movements: 2
+  - Backward movements: 6
+- <DONE_LIST_NAME>
+  - Forward movements: 0
+  - Backward movements: 0
+
+
+## Cycle
+Time between development state and reaching 'Done' state.
+- avg: 87.88505 h, std_dev: 70.4038598361
+## Lead
+Time from start to end ('Done' state).
+- avg: 91.6390803279 h, std_dev: 70.837852459
+
+
+Chart with average card time in each list created in <pygal.graph.horizontalbar.HorizontalBar object at 0x102a8aad0>
+Chart with average time a list is a forward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x10218eed0>
+Chart with average time a list is a backward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x103930290>
+
+
+--- END OF FILE ---

@@ -62,8 +62,22 @@ DEVELOPMENT_LIST = {
     "<board_N>": u"<board_N_in_development_name>",
 }
 
+# This dict allows us to specify the "done" column. Optional.
+# If this dict is not present it will suppose the last column is "done" column.
+DONE_LIST = {
+    "_default": u"<default name of 'done' list in your Kanban boards>",
+    # You can specify different names for specific boards:
+    "<board_1>": u"<board_1_done_list_name>",
+    "<board_2>": u"<board_2_done_list_name>",
+    # ...
+    "<board_N>": u"<board_N_done_list_name>",
+}
+
 # Output dir for the stats
 OUTPUT_DIR = "<output>"
+
+# If you want to use test.py set here the name of the board you want to query
+TEST_BOARD = "<Name of the test board>"
 ```
 
 
@@ -77,6 +91,9 @@ python stats_extractor.py <board_name>
 
 returns a summary of stats of the board_name.
 
+# Output
+
+See output example file in [example result file](result-examples/results-for-board-example-datetime.txt).
 
 # Questions? Suggestions?
 
