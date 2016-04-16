@@ -5,8 +5,6 @@ from stats import trellostatsextractor
 import inspect
 
 
-
-
 def make(trello_connector, board_name):
     """
     Creates a summary of the stats of a card board.
