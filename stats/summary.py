@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
-import datetime
-
-import settings
+from __future__ import unicode_literals
 from charts import trellochart
 from printer.printer import Printer
-from stats import trellostats
+from stats import trellostatsextractor
 
 
-def make(client, board_name):
+def make(trello_connector, board_name):
     """
     Creates a summary of the stats of a card board.
-    Creates a txt file with the data and three svgs with the charts.
-    :param client: TrelloClient used to get information
+    Creates a txt file with the data and three png images with the charts.
+    :param trello_connector: TrelloConnector used to get information
     :param board_name: Name of the board.
     """
 
-    stats = trellostats.get_stats(client, board_name=board_name, card_is_active_function=lambda c: not c.closed)
+    client = trello_connector.get_trello_client()
+    boards = client.list_boards()
+    for board in boards:
+        print(board.name)
+
+    stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
+
+    stats = stat_extractor.get_stats(card_is_active_function=lambda c: not c.closed)
 
     printer = Printer(u"results_for_{0}_board".format(board_name))
 

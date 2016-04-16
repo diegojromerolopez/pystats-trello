@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import settings
 from stats import summary
-from connector import connector
+from auth import connector
 import sys
 
 if __name__ == "__main__":

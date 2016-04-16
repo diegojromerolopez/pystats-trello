@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import settings
+from auth.connector import TrelloConnector
 from stats import summary
-from connector import connector
 
 if __name__ == "__main__":
 
@@ -9,7 +10,8 @@ if __name__ == "__main__":
     api_secret = settings.TRELLO_API_SECRET
     token = settings.TRELLO_TOKEN
     token_secret = settings.TRELLO_TOKEN_SECRET
-    client = connector.connect(api_key, api_secret, token, token_secret)
 
-    summary.make(client, settings.TEST_BOARD)
+    trello_connector = TrelloConnector(api_key, api_secret, token, token_secret)
+
+    summary.make(trello_connector, settings.TEST_BOARD)
 
