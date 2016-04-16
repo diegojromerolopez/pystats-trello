@@ -13,11 +13,6 @@ def make(trello_connector, board_name):
     :param board_name: Name of the board.
     """
 
-    client = trello_connector.get_trello_client()
-    boards = client.list_boards()
-    for board in boards:
-        print(board.name)
-
     stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
 
     stats = stat_extractor.get_stats(card_is_active_function=lambda c: not c.closed)
