@@ -1,11 +1,9 @@
+# Measurements for <BOARD NAME>
 
 
-# Measurements for <BOARD_NAME>
-
-
-## General measurements for <BOARD_NAME>
+## General measurements for <BOARD NAME>
 - The board is 38801.2637167 hours old
-- Last card was created 52.6774282236 hours ago
+- Last card was created 59.7675728711 hours ago
 - There are 38 tasks (37 active / 1 inactive [see note 1]) (
 - There are 2 tasks in 'done' (0 are inactive [see note 1])
 - 0.00309268277642 tasks per day or 5.15447129404e-05 tasks per hour
@@ -14,39 +12,39 @@
 
 
 ## Average time in each column for all the board cards
-- <FIRST_LIST_NAME>: 69.697487654 h (std. dev. 96.4563849404)
-- <SECOND_LIST_NAME>: 28.8664335853 h (std. dev. 75.7254666017)
-- <THIRD_LIST_NAME>: 22.7047418514 h (std. dev. 64.282343005)
-- <FOURTH_LIST_NAME>: 12.0685981982 h (std. dev. 68.0237194008)
-- <FIFTH_LIST_NAME>: 11.7240026484 h (std. dev. 35.0341415652)
-- <SIXTH_LIST_NAME>: 0.455780741397 h (std. dev. 1.90547248354)
-- <SEVENTH_LIST_NAME>: 165.291794194 h (std. dev. 199.017376503)
-- <DONE_LIST_NAME>: 0.0 h (std. dev. 0.0)
+- <FIRST_COLUMN>: 71.7707854404 h (std. dev. 98.2023288536)
+- <SECOND_COLUMN>: 29.9973630791 h (std. dev. 77.9630340122)
+- <THIRD_COLUMN>: 22.8932301757 h (std. dev. 65.2705058805)
+- <FOURTH_COLUMN>: 12.0685981982 h (std. dev. 68.0237194008)
+- <FIFTH_COLUMN>: 11.9124849757 h (std. dev. 35.5336994673)
+- <SIXTH_COLUMN>: 0.455780741397 h (std. dev. 1.90547248354)
+- <SEVENTH_COLUMN>: 168.307653151 h (std. dev. 202.011965243)
+- <DONE_COLUMN>: 0.0 h (std. dev. 0.0)
 
 
 ## Sum of forward/backward movements by source column for all the cards
-- <FIRST_LIST_NAME>
+- <FIRST_COLUMN>
   - Forward movements: 21
   - Backward movements: 0
-- <SECOND_LIST_NAME>
+- <SECOND_COLUMN>
   - Forward movements: 3
   - Backward movements: 1
-- <THIRD_LIST_NAME>
+- <THIRD_COLUMN>
   - Forward movements: 9
   - Backward movements: 1
-- <FOURTH_LIST_NAME>
+- <FOURTH_COLUMN>
   - Forward movements: 10
   - Backward movements: 1
-- <FIFTH_LIST_NAME>
+- <FIFTH_COLUMN>
   - Forward movements: 8
   - Backward movements: 0
-- <SIXTH_LIST_NAME>
+- <SIXTH_COLUMN>
   - Forward movements: 6
   - Backward movements: 0
-- <SEVENTH_LIST_NAME>
+- <SEVENTH_COLUMN>
   - Forward movements: 2
   - Backward movements: 6
-- <DONE_LIST_NAME>
+- <DONE_COLUMN>
   - Forward movements: 0
   - Backward movements: 0
 
@@ -59,9 +57,51 @@ Time from start to end ('Done' state).
 - avg: 91.6390803279 h, std_dev: 70.837852459
 
 
-Chart with average card time in each list created in <pygal.graph.horizontalbar.HorizontalBar object at 0x102a8aad0>
-Chart with average time a list is a forward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x10218eed0>
-Chart with average time a list is a backward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x103930290>
+# Time each card has been in each column (hours)
+Card_id Card_name <FIRST_COLUMN>, <SECOND_COLUMN>, <THIRD_COLUMN>, <FOURTH_COLUMN>, <FIFTH_COLUMN>, <SIXTH_COLUMN>, <SEVENTH_COLUMN>, <DONE_COLUMN>
+- <ID_TASK_1> '<TASK_1>': 386.485509962, 0.000660655737705, 0, 0, 0, 0, 0, 0
+- <ID_TASK_2> '<TASK_2>': 391.455489277, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_3> '<TASK_3>': 199.92779492, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_4> '<TASK_4>': 132.946321413, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_5> '<TASK_5>': 127.956294921, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_6> '<TASK_6>': 109.546381593, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_7> '<TASK_7>': 104.648155203, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_8> '<TASK_8>': 84.511424897, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_9> '<TASK_9>': 60.9225272615, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_10> '<TASK_10>': 60.8660258533, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_11> '<TASK_11>': 58.7739859959, 0, 0, 0, 0, 0, 0, 0
+- <ID_TASK_12> '<TASK_12>': 269.056281421, 96.5657494514, 0, 0, 0, 0, 0, 0
+- <ID_TASK_13> '<TASK_13>': 114.287512295, 365.877035584, 0, 0, 0, 0, 141.427960929, 0
+- <ID_TASK_14> '<TASK_14>': 0, 249.504762981, 0.144728961749, 0, 0, 0, 0, 0
+- <ID_TASK_15> '<TASK_15>': 86.993495082, 132.790839249, 0, 0, 0, 0, 0, 0
+- <ID_TASK_16> '<TASK_16>': 70.134897541, 132.68137864, 0, 0, 0, 0, 0, 0
+...
+
+
+# Spent and estimated times for each card
+Card_id Card_name CurrentList Spent Estimated
+- <ID_TASK_1> '<TASK_1>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_2> '<TASK_2>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_3> '<TASK_3>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_4> '<TASK_4>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_5> '<TASK_5>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_6> '<TASK_6>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_7> '<TASK_7>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_8> '<TASK_8>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_9> '<TASK_9>' (<FIRST_COLUMN>): N/A 6
+- <ID_TASK_10> '<TASK_10>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_11> '<TASK_11>' (<FIRST_COLUMN>): N/A N/A
+- <ID_TASK_12> '<TASK_12>' (<SECOND_COLUMN>): N/A N/A
+- <ID_TASK_13> '<TASK_13>' (<SECOND_COLUMN>): N/A N/A
+- <ID_TASK_14> '<TASK_14>' (<SECOND_COLUMN>): N/A 4
+- <ID_TASK_15> '<TASK_15>' (<SECOND_COLUMN>): N/A N/A
+- <ID_TASK_16> '<TASK_16>' (<SECOND_COLUMN>): N/A 3
+...
+
+
+Chart with average card time in each list created in <pygal.graph.horizontalbar.HorizontalBar object at 0x1077d81d0>
+Chart with average time a list is a forward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x106ba6050>
+Chart with average time a list is a backward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x108373350>
 
 
 --- END OF FILE ---
