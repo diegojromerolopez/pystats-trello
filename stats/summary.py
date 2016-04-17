@@ -83,11 +83,17 @@ def make(trello_connector, board_name, card_movements_filter=None):
     # Cycle time
     printer.p(u"## Cycle")
     printer.p(u"Time between development state and reaching 'Done' state{0}".format(in_date_interval_text))
+    for card in stats["done_cards"]:
+        printer.p(u"- {0} {1}: {2}".format(card.id, _short_card_name(card), stats["cycle_time"]["values"][card.id]))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["cycle_time"]["avg"], stats["cycle_time"]["std_dev"]))
+
+    printer.newline()
 
     # Lead time
     printer.p(u"## Lead")
     printer.p(u"Time from start to end ('Done' state){0}".format(in_date_interval_text))
+    for card in stats["done_cards"]:
+        printer.p(u"- {0} {1}: {2}".format(card.id, _short_card_name(card), stats["lead_time"]["values"][card.id]))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["lead_time"]["avg"], stats["lead_time"]["std_dev"]))
 
     # Chart with times for all cards in each column

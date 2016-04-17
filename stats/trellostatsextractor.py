@@ -135,8 +135,6 @@ class TrelloStatsExtractor(object):
         stats.update(
             {
                 "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
-                "lead_time": add_statistic_summary(stats["lead_time"]),
-                "cycle_time": add_statistic_summary(stats["cycle_time"])
             }
         )
 
@@ -157,8 +155,8 @@ class TrelloStatsExtractor(object):
         forward_list = {list_.id: 0 for list_ in self.lists}
         backward_list = {list_.id: 0 for list_ in self.lists}
 
-        cycle_time = []
-        lead_time = []
+        cycle_time = {}
+        lead_time = {}
 
         # Active cards by our definition given by the lambda function
         active_cards = []
@@ -205,12 +203,12 @@ class TrelloStatsExtractor(object):
                 if card_is_done(card):
                     #  Lead time (time between creation in board to reaching "Done" state)
                     card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
-                    lead_time.append(card.lead_time)
+                    lead_time[card.id] = card.lead_time
                     # Cycle time (time between development and reaching "Done" state)
                     card.cycle_time = sum(
                         [list_stats["time"] if list_id in self.cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
                     )
-                    cycle_time.append(card.cycle_time)
+                    cycle_time[card.id] = card.cycle_time
                     done_cards.append(card)
 
                 # Add this card stats to each global stat
@@ -266,8 +264,16 @@ class TrelloStatsExtractor(object):
             "time_by_list": time_by_list,
             "backward_movements_by_list": backward_list,
             "forward_movements_by_list": forward_list,
-            "lead_time": lead_time,
-            "cycle_time": cycle_time
+            "lead_time": {
+                "values": lead_time,
+                "avg": numpy.mean(lead_time.values()),
+                "std_dev": numpy.std(lead_time.values(), axis=0)
+            },
+            "cycle_time": {
+                "values": cycle_time,
+                "avg": numpy.mean(cycle_time.values()),
+                "std_dev": numpy.std(cycle_time.values(), axis=0)
+            },
         }
         return stats
 
