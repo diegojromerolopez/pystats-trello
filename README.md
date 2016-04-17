@@ -17,6 +17,10 @@ Average time the cards spend in each column.
 
 Very useful to detect bottlenecks in your management process or project.
 
+## Forward and backward movements per column
+
+Number of forward movements and bacward movements that have a column as a source.
+
 ## Cycle
 
 Time between development state and reaching "Done" state.
@@ -28,6 +32,23 @@ The average development and deployment time for all tasks of board.
 Time from start to end ("Done" state).
 
 Time a client has to wait to see a feature he/she asked.
+
+## Time each card has been in each column
+
+Based on movement operations, it is computed the time each card is in each column.
+
+## Spent and estimated times for each card
+
+Some plugins like Plus for Trello (http://www.plusfortrello.com/p/about.html)
+allow the insertion of spent and estimated time values in the comments of each
+card.
+
+Specifying a regex in the settings_local allow the system to fetch them and
+interpret them.
+
+Please, note that we have supposed that if there are several comments with different
+numbers, the numbers must be added. This is the case of Plus for Trello but your
+case could be different.
 
 # Installation
 
@@ -72,6 +93,13 @@ DONE_LIST = {
     # ...
     "<board_N>": u"<board_N_done_list_name>",
 }
+
+# Some systems store the spent and estimated times of each task in the card comments.
+# Setting this option allow the system to automatically fetch them.
+# For example r"^plus!\s(?P<spent>(\-)?\d+(\.\d+)?)/(?P<estimated>(\-)?\d+(\.\d+)?)"
+# is the regex for matching Plus for Trello (http://www.plusfortrello.com/p/about.html)
+# comments
+SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX = r"<regular expression used by plugin>"
 
 # Output dir for the stats
 OUTPUT_DIR = "<output>"

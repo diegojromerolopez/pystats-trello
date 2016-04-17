@@ -2,6 +2,7 @@
 from charts import trellochart
 from printer.printer import Printer
 from stats import trellostatsextractor
+import settings
 import inspect
 
 
@@ -91,9 +92,27 @@ def make(trello_connector, board_name):
         card_line = u""
         for list_ in stats["lists"]:
             card_line += u"{0}{1}".format(stats["active_card_stats_by_list"][card.id][list_.id]["time"], (", " if list_.id != stats["lists"][-1].id else ""))
-        printer.p(u"- {0} '{1}': {2}".format(card.id, card.name.decode("utf-8")[0:30]+u"...", card_line))
+        printer.p(u"- {0} '{1}': {2}".format(card.id, short_card_name(card), card_line))
 
     printer.newline()
+
+    if hasattr(settings, "SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX"):
+        printer.p(u"# Spent and estimated times for each card (in units given by plugin)")
+
+        printer.p(u"Card_id Card_name CurrentList Spent Estimated")
+        for card in stats["active_cards"]:
+            card_name = short_card_name(card)
+            list_name = stat_extractor.lists_dict[card.idList].name.decode("utf-8")
+            card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
+            card_spent_time = card_s_e_times["spent"] if not card_s_e_times["spent"] is None else u"N/A"
+            card_estimated_time = card_s_e_times["estimated"] if not card_s_e_times["estimated"] is None else u"N/A"
+
+            printer.p(u"- {0} '{1}' ({2}): {3} {4}".format(
+                    card.id, card_name, list_name, card_spent_time, card_estimated_time
+                )
+            )
+
+        printer.newline()
 
     printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]))
     printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]))
@@ -104,3 +123,17 @@ def make(trello_connector, board_name):
     printer.p(u"--- END OF FILE ---")
 
     printer.flush()
+
+
+def short_card_name(card, max_length=40):
+    """
+    Returns a short form of the card name, adding "..." if it is needed.
+    :param card: object trello card.
+    :param max_length: Max length of the card name.
+    :return: Short card name.
+    """
+    card_name = card.name.decode("utf-8").replace(u"'", u"\'").replace(u"\"", u"\\\"")
+    _short_card_name = card_name[:max_length]
+    if len(card_name) > max_length:
+        _short_card_name += u"..."
+    return _short_card_name

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 import numpy
+import re
+
 import settings
 from stats.debug import print_card
 
@@ -158,8 +160,6 @@ class TrelloStatsExtractor(object):
         cycle_time = []
         lead_time = []
 
-        card_stats_by_list = {}
-
         # Active cards by our definition given by the lambda function
         active_cards = []
 
@@ -198,7 +198,6 @@ class TrelloStatsExtractor(object):
             if card_is_active_function(card):
                 print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
                 card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list, tz=settings.TIMEZONE, time_unit="hours")
-                card_stats_by_list[card.id] = card.stats_by_list
 
                 # If the card is done, compute lead and cycle time
                 if card_is_done(card):
@@ -219,6 +218,9 @@ class TrelloStatsExtractor(object):
                     time_by_list[list_id].append(card_stats_by_list["time"])
                     forward_list[list_id] += card_stats_by_list["forward_moves"]
                     backward_list[list_id] += card_stats_by_list["backward_moves"]
+
+                # Comments
+                card.s_e = self._get_spent_estimated(card)
 
                 # Card creation datetime
                 card_creation_datetimes.append(card.create_date)
@@ -246,6 +248,7 @@ class TrelloStatsExtractor(object):
             "lists": self.lists,
             "cards": self.cards,
             "active_card_stats_by_list": {card.id: card.stats_by_list for card in active_cards},
+            "active_card_spent_estimated_times": {card.id: card.s_e for card in active_cards},
             "active_cards": active_cards,
             "done_inactive_cards": done_inactive_cards,
             "inactive_cards": inactive_cards,
@@ -266,4 +269,27 @@ class TrelloStatsExtractor(object):
         }
         return stats
 
+    # Gets the spent and estimated times for this card
+    # Plugins like Plus for Trello are able to store estimated duration of the task and actual spent time in comments.
+    # This plugins has a format (plus! <spent>/<estimated> in case of Plus for Trello) and this format can be defined
+    # in settings local by the use of a regular expression.
+    def _get_spent_estimated(self, card):
+        # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
+        if not hasattr(settings, "SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX"):
+            return False
 
+        comments = card.get_comments()
+        spent = None
+        estimated = None
+        # For each comment, find the desired pattern and extract the spent and estimated times
+        for comment in comments:
+            comment_content = comment["data"]["text"]
+            matches = re.match(settings.SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX, comment_content)
+            if matches:
+                if spent is None:
+                    spent = 0
+                spent += float(matches.group("spent"))
+                if estimated is None:
+                    estimated = 0
+                estimated += float(matches.group("estimated"))
+        return {"spent": spent, "estimated": estimated}

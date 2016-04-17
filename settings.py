@@ -19,6 +19,16 @@ TRELLO_TOKEN_SECRET = settings_local.TRELLO_TOKEN_SECRET
 
 DEVELOPMENT_LIST = settings_local.DEVELOPMENT_LIST
 
+if hasattr(settings_local, "DONE_LIST"):
+    DONE_LIST = settings_local.DONE_LIST
+
+# Some systems store the spent and estimated times of each task in the card comments.
+# Setting this option allow the system to automatically fetch them.
+# For example r"^plus!\s(?P<spent>(\-)?\d+(\.\d+)?)/(?P<estimated>(\-)?\d+(\.\d+)?)" is the regex for matching
+# Plus for Trello comments
+if hasattr(settings_local, "SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX"):
+    SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX = settings_local.SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX
+
 TEST_BOARD = settings_local.TEST_BOARD
 
 OUTPUT_DIR = settings_local.OUTPUT_DIR
