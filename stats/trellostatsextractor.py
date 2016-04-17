@@ -229,6 +229,10 @@ class TrelloStatsExtractor(object):
                 if board_last_activity is None or board_last_activity < card.date_last_activity:
                     board_last_activity = card.date_last_activity
 
+                # Compute custom workflows (if needed)
+                card.custom_workflow_times = self._get_custom_workflow_times(card)
+
+                # Add this card to active cards
                 active_cards.append(card)
 
             # Inactive cards
@@ -276,6 +280,32 @@ class TrelloStatsExtractor(object):
             },
         }
         return stats
+
+    #
+    def _get_custom_workflow_times(self, card):
+        # If there is no custom workflows or this board has no custom workflows, there is no custom workflow times
+        # for this card
+        if not hasattr(settings, "CUSTOM_WORKFLOWS") or not self.board_name in settings.CUSTOM_WORKFLOWS:
+            return None
+
+        card_times_by_workflow = {}
+        for custom_workflow_id, custom_workflow in settings.CUSTOM_WORKFLOWS[self.board_name].items():
+            card_times_by_workflow[custom_workflow_id] = 0
+
+            # If this card is not in one of the lists that have the role of "done" lists, it is not possible to
+            # compute this workflow time
+            card_list_name = self.lists_dict[card.idList].name.decode("utf-8")
+            if not card_list_name in custom_workflow["done_lists"]:
+                card_times_by_workflow[custom_workflow_id] = None
+                continue
+
+            # Sum of the times of each custom workflow list this card has been
+            for list_name in custom_workflow["lists"]:
+                list_ = self.lists_dict_by_name[list_name]
+                card_times_by_workflow[custom_workflow_id] += card.stats_by_list[list_.id]["time"]
+
+        # Return all the custom workflow times
+        return card_times_by_workflow
 
     # Gets the spent and estimated times for this card
     # Plugins like Plus for Trello are able to store estimated duration of the task and actual spent time in comments.

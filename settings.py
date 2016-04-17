@@ -22,6 +22,10 @@ DEVELOPMENT_LIST = settings_local.DEVELOPMENT_LIST
 if hasattr(settings_local, "DONE_LIST"):
     DONE_LIST = settings_local.DONE_LIST
 
+#
+if hasattr(settings_local, "CUSTOM_WORKFLOWS"):
+    CUSTOM_WORKFLOWS = settings_local.CUSTOM_WORKFLOWS
+
 # The conditions to extract all the statistic information about a card is defined here.
 # In this application jargon, cards that pass this test are called "active cards".
 # This setting is optional and by default, cards that are not archived will be considered active.

@@ -101,6 +101,19 @@ def make(trello_connector, board_name, card_movements_filter=None):
 
     printer.newline()
 
+    # Custom workflows
+    if hasattr(settings, "CUSTOM_WORKFLOWS") and stat_extractor.board_name in settings.CUSTOM_WORKFLOWS:
+        for custom_workflow_id, custom_workflow in settings.CUSTOM_WORKFLOWS[stat_extractor.board_name].items():
+            printer.p(u" ## Custom workflow {0}".format(custom_workflow["name"]))
+            for card in stats["cards"]:
+                if hasattr(card, "custom_workflow_times") and\
+                        custom_workflow_id in card.custom_workflow_times and\
+                        not card.custom_workflow_times[custom_workflow_id] is None:
+                    card_line = u"{0}".format(card.custom_workflow_times[custom_workflow_id])
+                    printer.p(u"- {0} '{1}': {2}".format(card.id, _short_card_name(card), card_line))
+
+    printer.newline()
+
     # Time each card has been in each column
     printer.p(u"# Time each card has been in each column (hours){0}".format(in_date_interval_text))
 
