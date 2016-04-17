@@ -116,9 +116,13 @@ TEST_BOARD = "<Name of the test board>"
 
 # How to use it
 
-```python
+```shell
 
-python stats_extractor.py <board_name>
+python stats_extractor.py <board_name> [since] [before]
+Where:
+- <board_name> is the name of the board you want to get stats.
+- [since] since when to count the movements of the cards in that board. It is a date in YYYY-MM-DD format.
+- [before] until when to count the movements of the cards in that board. It is a date in YYYY-MM-DD format.
 
 ```
 
