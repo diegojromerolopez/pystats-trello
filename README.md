@@ -94,6 +94,18 @@ DONE_LIST = {
     "<board_N>": u"<board_N_done_list_name>",
 }
 
+# Do you want a custom workflow?
+# You can specify it by board
+CUSTOM_WORKFLOWS = {
+    u"<board_name>": {
+        "<custom_workflow_id>": {
+            "name": u"<custom_workflow_name>",
+            "lists": [u"<LIST_3>", u"<LIST_4>", u"<LIST_5>", u"<LIST_6>"],
+            "done_lists": [u"<LIST_6>", u"<LIST_7>", u"<LIST_8>"]
+        }
+    }
+}
+
 # The conditions to extract all the statistic information about a card is defined here.
 # In this application jargon, cards that pass this test are called "active cards".
 # This setting is optional and by default, cards that are not archived will be considered active.
