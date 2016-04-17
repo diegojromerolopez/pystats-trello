@@ -16,7 +16,11 @@ def make(trello_connector, board_name):
 
     stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
 
+    # Setting the function that tests if a card is active
     card_is_active_function = lambda c: not c.closed
+    if hasattr(settings, "CARD_IS_ACTIVE_FUNCTION"):
+        card_is_active_function = settings.CARD_IS_ACTIVE_FUNCTION
+
     stats = stat_extractor.get_stats(card_is_active_function=card_is_active_function)
 
     printer = Printer(u"results_for_{0}_board".format(board_name))

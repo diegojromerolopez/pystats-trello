@@ -94,6 +94,11 @@ DONE_LIST = {
     "<board_N>": u"<board_N_done_list_name>",
 }
 
+# The conditions to extract all the statistic information about a card is defined here.
+# In this application jargon, cards that pass this test are called "active cards".
+# This setting is optional and by default, cards that are not archived will be considered active.
+CARD_IS_ACTIVE_FUNCTION = lambda c : not c.closed
+
 # Some systems store the spent and estimated times of each task in the card comments.
 # Setting this option allow the system to automatically fetch them.
 # For example r"^plus!\s(?P<spent>(\-)?\d+(\.\d+)?)/(?P<estimated>(\-)?\d+(\.\d+)?)"
