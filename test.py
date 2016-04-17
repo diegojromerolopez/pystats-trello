@@ -3,6 +3,7 @@
 import settings
 from auth.connector import TrelloConnector
 from stats import summary
+import datetime
 
 if __name__ == "__main__":
 
@@ -13,5 +14,7 @@ if __name__ == "__main__":
 
     trello_connector = TrelloConnector(api_key, api_secret, token, token_secret)
 
-    summary.make(trello_connector, settings.TEST_BOARD)
+    card_movements_filter = None
+
+    summary.make(trello_connector, settings.TEST_BOARD, card_movements_filter)
 

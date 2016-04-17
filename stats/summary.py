@@ -6,12 +6,14 @@ import settings
 import inspect
 
 
-def make(trello_connector, board_name):
+def make(trello_connector, board_name, card_movements_filter=None):
     """
     Creates a summary of the stats of a card board.
     Creates a txt file with the data and three png images with the charts.
     :param trello_connector: TrelloConnector used to get information
     :param board_name: Name of the board.
+    :param card_movements_filter: Dates since and before that allow filtering when getting card movements.
+            Dates must be in YYYY-MM-DD format.
     """
 
     stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
@@ -21,7 +23,17 @@ def make(trello_connector, board_name):
     if hasattr(settings, "CARD_IS_ACTIVE_FUNCTION"):
         card_is_active_function = settings.CARD_IS_ACTIVE_FUNCTION
 
-    stats = stat_extractor.get_stats(card_is_active_function=card_is_active_function)
+    # Suffix for the titles of the output file in case there is a
+    in_date_interval_text = u""
+    if card_movements_filter:
+        if card_movements_filter[0] and card_movements_filter[1]:
+            in_date_interval_text = u" between dates {0} and {1}".format(card_movements_filter[0], card_movements_filter[1])
+        elif card_movements_filter[0]:
+            in_date_interval_text = u" since {0}".format(card_movements_filter[0])
+        elif card_movements_filter[1]:
+            in_date_interval_text = u" before {0}".format(card_movements_filter[1])
+
+    stats = stat_extractor.get_stats(card_is_active_function=card_is_active_function, card_movements_filter=card_movements_filter)
 
     printer = Printer(u"results_for_{0}_board".format(board_name))
 
@@ -45,7 +57,7 @@ def make(trello_connector, board_name):
     printer.newline()
 
     # Average time in each column for all the cards
-    printer.p(u"## Average time in each column for all the board cards")
+    printer.p(u"## Average time in each column for all the board cards{0}".format(in_date_interval_text))
     for list_ in stats["lists"]:
         list_id = list_.id
         list_name = list_.name.decode("utf-8")
@@ -56,7 +68,7 @@ def make(trello_connector, board_name):
     printer.newline()
 
     # Forward/backward movements by column for all the cards
-    printer.p(u"## Sum of forward/backward movements by source column for all the cards")
+    printer.p(u"## Sum of forward/backward movements by source column for all the cards{0}".format(in_date_interval_text))
     for list_ in stats["lists"]:
         list_id = list_.id
         list_name = list_.name.decode("utf-8")
@@ -70,12 +82,12 @@ def make(trello_connector, board_name):
 
     # Cycle time
     printer.p(u"## Cycle")
-    printer.p(u"Time between development state and reaching 'Done' state.")
+    printer.p(u"Time between development state and reaching 'Done' state{0}".format(in_date_interval_text))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["cycle_time"]["avg"], stats["cycle_time"]["std_dev"]))
 
     # Lead time
     printer.p(u"## Lead")
-    printer.p(u"Time from start to end ('Done' state).")
+    printer.p(u"Time from start to end ('Done' state){0}".format(in_date_interval_text))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["lead_time"]["avg"], stats["lead_time"]["std_dev"]))
 
     # Chart with times for all cards in each column
@@ -84,7 +96,7 @@ def make(trello_connector, board_name):
     printer.newline()
 
     # Time each card has been in each column
-    printer.p(u"# Time each card has been in each column (hours)")
+    printer.p(u"# Time each card has been in each column (hours){0}".format(in_date_interval_text))
 
     lists_header = u""
     for list_ in stats["lists"]:
@@ -96,7 +108,7 @@ def make(trello_connector, board_name):
         card_line = u""
         for list_ in stats["lists"]:
             card_line += u"{0}{1}".format(stats["active_card_stats_by_list"][card.id][list_.id]["time"], (", " if list_.id != stats["lists"][-1].id else ""))
-        printer.p(u"- {0} '{1}': {2}".format(card.id, short_card_name(card), card_line))
+        printer.p(u"- {0} '{1}': {2}".format(card.id, _short_card_name(card), card_line))
 
     printer.newline()
 
@@ -105,7 +117,7 @@ def make(trello_connector, board_name):
 
         printer.p(u"Card_id Card_name CurrentList Spent Estimated")
         for card in stats["active_cards"]:
-            card_name = short_card_name(card)
+            card_name = _short_card_name(card)
             list_name = stat_extractor.lists_dict[card.idList].name.decode("utf-8")
             card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
             card_spent_time = card_s_e_times["spent"] if not card_s_e_times["spent"] is None else u"N/A"
@@ -129,7 +141,7 @@ def make(trello_connector, board_name):
     printer.flush()
 
 
-def short_card_name(card, max_length=40):
+def _short_card_name(card, max_length=40):
     """
     Returns a short form of the card name, adding "..." if it is needed.
     :param card: object trello card.

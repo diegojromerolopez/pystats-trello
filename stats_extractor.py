@@ -8,7 +8,9 @@ import sys
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print(u"ERROR. Use: python stats_extractor.py <board_name>")
+        print(u"ERROR. Use: python stats_extractor.py <board_name> [since] [before]")
+        print(u"- <board_name> is the board name you want to extract stats to.")
+        print(u"- [since] and [before] are optional and are the date limits to get movements in that interval.")
         exit(-1)
 
     board_name = sys.argv[1]
@@ -20,5 +22,11 @@ if __name__ == "__main__":
 
     trello_connector = TrelloConnector(api_key, api_secret, token, token_secret)
 
-    summary.make(trello_connector, board_name)
+    card_movements_filter = None
+    if len(sys.argv) == 4:
+        card_movements_filter = [sys.argv[2], sys.argv[3]]
+    elif len(sys.argv) == 3:
+        card_movements_filter = [sys.argv[2], None]
+
+    summary.make(trello_connector, board_name, card_movements_filter)
 

@@ -117,7 +117,7 @@ class TrelloStatsExtractor(object):
     # Computes the statistics of the cards.
     # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
     # The other metrics are absolute values.
-    def get_stats(self, card_is_active_function=lambda c: True):
+    def get_stats(self, card_is_active_function=lambda c: True, card_movements_filter=None):
 
         def add_statistic_summary(value_list):
             return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
@@ -129,7 +129,7 @@ class TrelloStatsExtractor(object):
 
             return stats_summary_by_list
 
-        stats = self.get_full_stats(card_is_active_function)
+        stats = self.get_full_stats(card_is_active_function, card_movements_filter)
 
         # Change the values for its mean and standard deviation
         stats.update(
@@ -144,7 +144,7 @@ class TrelloStatsExtractor(object):
 
     # Compute the full stats of the board.
     # That is, it computes the concrete values for each measure.
-    def get_full_stats(self, card_is_active_function):
+    def get_full_stats(self, card_is_active_function, card_movements_filter=None):
 
         # Utility function that check if a card is done
         def card_is_done(_card):
@@ -197,7 +197,9 @@ class TrelloStatsExtractor(object):
             # give programmers the option to customize this parameter
             if card_is_active_function(card):
                 print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
-                card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list, tz=settings.TIMEZONE, time_unit="hours")
+                card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list,
+                                                            tz=settings.TIMEZONE, time_unit="hours",
+                                                            card_movements_filter=card_movements_filter)
 
                 # If the card is done, compute lead and cycle time
                 if card_is_done(card):
