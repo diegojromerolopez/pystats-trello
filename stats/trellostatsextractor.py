@@ -184,11 +184,13 @@ class TrelloStatsExtractor(TrelloBoard):
     def _get_custom_workflow_times(self, card):
         # If there is no custom workflows or this board has no custom workflows, there is no custom workflow times
         # for this card
-        if not hasattr(settings, "CUSTOM_WORKFLOWS") or not self.board_name in settings.CUSTOM_WORKFLOWS:
+        if not self.has_custom_workflows():
             return None
 
+        workflows = self.get_custom_workflows()
+
         card_times_by_workflow = {}
-        for custom_workflow_id, custom_workflow in settings.CUSTOM_WORKFLOWS[self.board_name].items():
+        for custom_workflow_id, custom_workflow in workflows.items():
             card_times_by_workflow[custom_workflow_id] = 0
 
             # If this card is not in one of the lists that have the role of "done" lists, it is not possible to
@@ -205,6 +207,14 @@ class TrelloStatsExtractor(TrelloBoard):
 
         # Return all the custom workflow times
         return card_times_by_workflow
+
+    def has_custom_workflows(self):
+        return hasattr(settings, "CUSTOM_WORKFLOWS") and self.board_name in settings.CUSTOM_WORKFLOWS
+
+    def get_custom_workflows(self):
+        if self.has_custom_workflows():
+            return settings.CUSTOM_WORKFLOWS[self.board_name]
+        return False
 
     # Gets the spent and estimated times for this card
     # Plugins like Plus for Trello are able to store estimated duration of the task and actual spent time in comments.

@@ -102,8 +102,8 @@ def make(trello_connector, board_name, card_movements_filter=None):
     printer.newline()
 
     # Custom workflows
-    if hasattr(settings, "CUSTOM_WORKFLOWS") and stat_extractor.board_name in settings.CUSTOM_WORKFLOWS:
-        for custom_workflow_id, custom_workflow in settings.CUSTOM_WORKFLOWS[stat_extractor.board_name].items():
+    if stat_extractor.has_custom_workflows():
+        for custom_workflow_id, custom_workflow in stat_extractor.get_custom_workflows().items():
             printer.p(u" ## Custom workflow {0}".format(custom_workflow["name"]))
             for card in stats["cards"]:
                 if hasattr(card, "custom_workflow_times") and\
