@@ -180,7 +180,7 @@ class TrelloStatsExtractor(TrelloBoard):
         }
         return stats
 
-    # Get specific worfkflow times
+    # Get specific workflow times
     def _get_custom_workflow_times(self, card):
         # If there is no custom workflows or this board has no custom workflows, there is no custom workflow times
         # for this card
