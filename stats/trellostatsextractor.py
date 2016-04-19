@@ -43,13 +43,8 @@ class TrelloStatsExtractor(TrelloBoard):
     # Compute the full stats of the board.
     # That is, it computes the concrete values for each measure.
     def get_full_stats(self):
-        import inspect
         # Function that checks if a card is still active
         card_is_active_function = self.configuration.card_is_active_function
-        #card_is_active_function = eval("lambda card : not card.closed")
-        #card_is_active_function = lambda card : not card.closed()
-        #print type(card_is_active_function)
-        #print inspect.getsource(card_is_active_function)
 
         # Date filter to select only a part of card actions instead of the last 1000 actions as Trello does
         card_movements_filter = self.configuration.card_action_filter
