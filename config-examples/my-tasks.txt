@@ -1,0 +1,18 @@
+BOARD_NAME: My Tasks
+
+DEVELOPMENT_LIST: Development
+
+DONE_LIST: Done
+
+CUSTOM_WORKFLOWS:
+- Tasks waiting pass to deployment server
+  - LISTS: Pending pass a deployment server
+  - DONE_LISTS: Done
+
+CARD_ACTION_FILTER: [2016-03-01, 2016-04-01]
+
+CARD_IS_ACTIVE_FUNCTION: not card.closed
+
+COMMENT_SPENT_ESTIMATED_TIME_REGEX: PLUS_FOR_TRELLO_REGEX
+
+OUTPUT_DIR: ./results/my-tasks

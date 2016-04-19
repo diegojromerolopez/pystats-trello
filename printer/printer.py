@@ -7,8 +7,9 @@ import settings
 # Small utility class that prints in stdio and
 class Printer(object):
 
-    def __init__(self, filename, print_in_stdio=True):
+    def __init__(self, filename, configuration, print_in_stdio=True):
         self.filename = filename
+        self.configuration = configuration
         self.string = u""
         self.print_in_stdio = print_in_stdio
 
@@ -22,6 +23,6 @@ class Printer(object):
 
     def flush(self):
         now_str = datetime.datetime.now(settings.TIMEZONE).strftime("%Y_%m_%d_%H_%M_%S")
-        output_filename = u"./{0}/{1}-{2}.txt".format(settings.OUTPUT_DIR, slugify(self.filename), now_str)
+        output_filename = u"{0}/{1}-{2}.txt".format(self.configuration.output_dir, slugify(self.filename), now_str)
         with open(output_filename, "w") as output_file:
             output_file.write(self.string.encode('utf8'))

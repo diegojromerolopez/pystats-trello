@@ -68,6 +68,9 @@ settings_local.py
 # Output directory
 results/*
 
+# Configuration directory
+configuration/*
+
 # MacOS
 .DS_Store
 

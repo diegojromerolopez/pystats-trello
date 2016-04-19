@@ -59,70 +59,56 @@ Activate the **virtualenv** and follow next steps.
 
 # Configuration
 
-First you have to create a file in the root of the project with the name **settings_local.py**.
+First you have to create a configuration file in the root of the project with the name **settings_local.py**.
 
-This file will contain authentication information and other global preferences for this project:
+This file will board preferences:
 
-```python
+```txt
 
-# Trello authentication parameters, see https://trello.com/app-key for more information
-TRELLO_API_KEY = "<trello api key>"
-TRELLO_API_SECRET = "<trello api secret>"
+BOARD_NAME: <BOARD NAME>
 
-TRELLO_TOKEN = "<trello token>"
-TRELLO_TOKEN_SECRET = "<trello token secret>"
+DEVELOPMENT_LIST: <DEFAULT_DEVELOPMENT_LIST_NAME>
 
-# This dict allows you to specify which of your columns is the "in development" column
-# why is this needed? To compute cycle time.
-DEVELOPMENT_LIST = {
-    "_default": u"<default name of 'development' in your Kanban boards>",
-    # You can specify different names for specific boards:
-    "<board_1>": u"<board_1_in_development_name>",
-    "<board_2>": u"<board_2_in_development_name>",
-    # ...
-    "<board_N>": u"<board_N_in_development_name>",
-}
+DONE_LIST: <DEFAULT_DONE_LIST_NAME>
 
-# This dict allows us to specify the "done" column. Optional.
-# If this dict is not present it will suppose the last column is "done" column.
-DONE_LIST = {
-    "_default": u"<default name of 'done' list in your Kanban boards>",
-    # You can specify different names for specific boards:
-    "<board_1>": u"<board_1_done_list_name>",
-    "<board_2>": u"<board_2_done_list_name>",
-    # ...
-    "<board_N>": u"<board_N_done_list_name>",
-}
+CUSTOM_WORKFLOWS:
+- <CUSTOM_WORKFLOW_1_NAME>
+  - LISTS: <LIST_1A_NAME>, <LIST_1B_NAME>, ... <LIST_1Z_NAME>
+  - DONE_LISTS: ... <LIST_1Z_NAME>
+- <CUSTOM_WORKFLOW_2_NAME>
+  - LISTS: <LIST_2A_NAME>, <LIST_2B_NAME>, ... <LIST_2Z_NAME>
+  - DONE_LISTS: ... <LIST_2Z_NAME>
 
-# Do you want a custom workflow?
-# You can specify it by board
-CUSTOM_WORKFLOWS = {
-    u"<board_name>": {
-        "<custom_workflow_id>": {
-            "name": u"<custom_workflow_name>",
-            "lists": [u"<LIST_3>", u"<LIST_4>", u"<LIST_5>", u"<LIST_6>"],
-            "done_lists": [u"<LIST_6>", u"<LIST_7>", u"<LIST_8>"]
-        }
-    }
-}
+CARD_ACTION_FILTER: [YYYY-MM-DD, YYYY-MM-DD]
 
-# The conditions to extract all the statistic information about a card is defined here.
-# In this application jargon, cards that pass this test are called "active cards".
-# This setting is optional and by default, cards that are not archived will be considered active.
-CARD_IS_ACTIVE_FUNCTION = lambda c : not c.closed
+CARD_IS_ACTIVE_FUNCTION: <CARD IS ACTIVE CONDITION> (by default is not card.closed)
 
-# Some systems store the spent and estimated times of each task in the card comments.
-# Setting this option allow the system to automatically fetch them.
-# For example r"^plus!\s(?P<spent>(\-)?\d+(\.\d+)?)/(?P<estimated>(\-)?\d+(\.\d+)?)"
-# is the regex for matching Plus for Trello (http://www.plusfortrello.com/p/about.html)
-# comments
-SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX = r"<regular expression used by plugin>"
+COMMENT_SPENT_ESTIMATED_TIME_REGEX: PLUS_FOR_TRELLO_REGEX
 
-# Output dir for the stats
-OUTPUT_DIR = "<output>"
+OUTPUT_DIR: <OUTPUT DIR>
+```
 
-# If you want to use test.py set here the name of the board you want to query
-TEST_BOARD = "<Name of the test board>"
+## Configuration example
+
+```txt
+BOARD_NAME: My Tasks
+
+DEVELOPMENT_LIST: Development
+
+DONE_LIST: Done
+
+CUSTOM_WORKFLOWS:
+- Tasks waiting pass to deployment server
+  - LISTS: Pending pass a deployment server
+  - DONE_LISTS: Done
+
+CARD_ACTION_FILTER: [2016-03-01, 2016-04-01]
+
+CARD_IS_ACTIVE_FUNCTION: not card.closed
+
+COMMENT_SPENT_ESTIMATED_TIME_REGEX: PLUS_FOR_TRELLO_REGEX
+
+OUTPUT_DIR: ./results/my-tasks
 ```
 
 
@@ -130,12 +116,9 @@ TEST_BOARD = "<Name of the test board>"
 
 ```shell
 
-python stats_extractor.py <board_name> [since] [before]
+python stats_extractor.py <configuration_file>
 Where:
-- <board_name> is the name of the board you want to get stats.
-- [since] since when to count the movements of the cards in that board. It is a date in YYYY-MM-DD format.
-- [before] until when to count the movements of the cards in that board. It is a date in YYYY-MM-DD format.
-
+- <configuration_file> is the file path of the configuration file with your preferences.
 ```
 
 returns a summary of stats of the board_name.

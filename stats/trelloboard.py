@@ -7,9 +7,12 @@ import settings
 class TrelloBoard(object):
 
         # Constructor based on credentials and a board name of the board it will compute the stats
-        def __init__(self, trello_connector, board_name):
+        def __init__(self, trello_connector, configuration):
             self.client = trello_connector.get_trello_client()
-            self._fetch_board(board_name)
+            self._fetch_board(configuration.board_name)
+            # Check that configuration (that lists name are right)
+            self._assert_configuration(configuration)
+            self.configuration = configuration
 
         # Fetches the board from Trello API
         # It also fetches and initializes its lists and its cards.
@@ -73,11 +76,8 @@ class TrelloBoard(object):
             self.done_list = self.lists[-1]
 
             # But we could have specified another one
-            if hasattr(settings, "DONE_LIST"):
-                if self.board_name in settings.DONE_LIST:
-                    self.done_list = self.lists_dict_by_name[settings.DONE_LIST[self.board_name]]
-                else:
-                    self.done_list = self.lists_dict_by_name[settings.DONE_LIST["_default"]]
+            if self.configuration.done_list_name:
+                self.done_list = self.lists_dict_by_name[self.configuration.done_list_name]
 
         # Initializes the cycle lists
         def _init_cycle_lists(self):
@@ -86,10 +86,7 @@ class TrelloBoard(object):
             Cycle lists are stored in self.cycle_lists (list) and self.cycle_lists_dict (dict).
             """
 
-            if self.board_name in settings.DEVELOPMENT_LIST:
-                development_list_name = settings.DEVELOPMENT_LIST[self.board_name]
-            else:
-                development_list_name = settings.DEVELOPMENT_LIST["_default"]
+            development_list = self.lists_dict_by_name[self.configuration.development_list_name]
 
             self.cycle_lists = []
             self.cycle_lists_dict = {}
@@ -97,7 +94,7 @@ class TrelloBoard(object):
             # Assumes from the development list to the end list, they all play a role in development
             add_to_cycle_list = False
             for _list in self.lists:
-                if _list.name.decode("utf-8") == development_list_name:
+                if _list.id == development_list.id:
                     add_to_cycle_list = True
                 if add_to_cycle_list:
                     self.cycle_lists.append(_list)
@@ -112,3 +109,22 @@ class TrelloBoard(object):
         def _init_cards(self):
             self.cards = self.board.all_cards()
 
+        # Asserts configuration looking for errors
+        def _assert_configuration(self, configuration):
+            # Check development list existence
+            self._assert_list_existence(configuration.development_list_name)
+
+            # Check done list existence
+            self._assert_list_existence(configuration.done_list_name)
+
+            # Check workflows
+            for workflow in configuration.custom_workflows:
+                for list_ in workflow.list_name_order:
+                    self._assert_list_existence(list_)
+                for list_ in workflow.done_list_names:
+                    self._assert_list_existence(list_)
+
+        # Check the existence of a list with a name in the board
+        def _assert_list_existence(self, list_name):
+            if self.lists_dict_by_name.get(list_name) is None:
+                raise ValueError(u"Development list '{0}' does not exists in board {1}".format(list_name, self.board_name))

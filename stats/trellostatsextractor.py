@@ -10,13 +10,14 @@ from stats.trelloboard import TrelloBoard
 
 class TrelloStatsExtractor(TrelloBoard):
 
-    def __init__(self, trello_connector, board_name):
-        super(TrelloStatsExtractor, self).__init__(trello_connector, board_name)
+    def __init__(self, trello_connector, configuration):
+        self.configuration = configuration
+        super(TrelloStatsExtractor, self).__init__(trello_connector, configuration)
 
     # Computes the statistics of the cards.
     # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
     # The other metrics are absolute values.
-    def get_stats(self, card_is_active_function=lambda c: True, card_movements_filter=None):
+    def get_stats(self):
 
         def add_statistic_summary(value_list):
             return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
@@ -28,7 +29,7 @@ class TrelloStatsExtractor(TrelloBoard):
 
             return stats_summary_by_list
 
-        stats = self.get_full_stats(card_is_active_function, card_movements_filter)
+        stats = self.get_full_stats()
 
         # Change the values for its mean and standard deviation
         stats.update(
@@ -41,7 +42,17 @@ class TrelloStatsExtractor(TrelloBoard):
 
     # Compute the full stats of the board.
     # That is, it computes the concrete values for each measure.
-    def get_full_stats(self, card_is_active_function, card_movements_filter=None):
+    def get_full_stats(self):
+        import inspect
+        # Function that checks if a card is still active
+        card_is_active_function = self.configuration.card_is_active_function
+        #card_is_active_function = eval("lambda card : not card.closed")
+        #card_is_active_function = lambda card : not card.closed()
+        #print type(card_is_active_function)
+        #print inspect.getsource(card_is_active_function)
+
+        # Date filter to select only a part of card actions instead of the last 1000 actions as Trello does
+        card_movements_filter = self.configuration.card_action_filter
 
         # Utility function that check if a card is done
         def card_is_done(_card):
@@ -190,18 +201,19 @@ class TrelloStatsExtractor(TrelloBoard):
         workflows = self.get_custom_workflows()
 
         card_times_by_workflow = {}
-        for custom_workflow_id, custom_workflow in workflows.items():
+        for custom_workflow in workflows:
+            custom_workflow_id = custom_workflow.name
             card_times_by_workflow[custom_workflow_id] = 0
 
             # If this card is not in one of the lists that have the role of "done" lists, it is not possible to
             # compute this workflow time
             card_list_name = self.lists_dict[card.idList].name.decode("utf-8")
-            if not card_list_name in custom_workflow["done_lists"]:
+            if not card_list_name in custom_workflow.done_list_names:
                 card_times_by_workflow[custom_workflow_id] = None
                 continue
 
             # Sum of the times of each custom workflow list this card has been
-            for list_name in custom_workflow["lists"]:
+            for list_name in custom_workflow.list_name_order:
                 list_ = self.lists_dict_by_name[list_name]
                 card_times_by_workflow[custom_workflow_id] += card.stats_by_list[list_.id]["time"]
 
@@ -209,11 +221,11 @@ class TrelloStatsExtractor(TrelloBoard):
         return card_times_by_workflow
 
     def has_custom_workflows(self):
-        return hasattr(settings, "CUSTOM_WORKFLOWS") and self.board_name in settings.CUSTOM_WORKFLOWS
+        return len(self.configuration.custom_workflows) > 0
 
     def get_custom_workflows(self):
         if self.has_custom_workflows():
-            return settings.CUSTOM_WORKFLOWS[self.board_name]
+            return self.configuration.custom_workflows
         return False
 
     # Gets the spent and estimated times for this card
@@ -222,7 +234,7 @@ class TrelloStatsExtractor(TrelloBoard):
     # in settings local by the use of a regular expression.
     def _get_spent_estimated(self, card):
         # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
-        if not hasattr(settings, "SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX"):
+        if self.configuration.spent_estimated_time_card_comment_regex:
             return False
 
         comments = card.get_comments()
@@ -231,7 +243,7 @@ class TrelloStatsExtractor(TrelloBoard):
         # For each comment, find the desired pattern and extract the spent and estimated times
         for comment in comments:
             comment_content = comment["data"]["text"]
-            matches = re.match(settings.SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX, comment_content)
+            matches = re.match(self.configuration.spent_estimated_time_card_comment_regex, comment_content)
             if matches:
                 if spent is None:
                     spent = 0

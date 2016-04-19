@@ -6,45 +6,44 @@ import settings
 import inspect
 
 
-def make(trello_connector, board_name, card_movements_filter=None):
+def make(trello_connector, configuration):
     """
     Creates a summary of the stats of a card board.
     Creates a txt file with the data and three png images with the charts.
     :param trello_connector: TrelloConnector used to get information
-    :param board_name: Name of the board.
-    :param card_movements_filter: Dates since and before that allow filtering when getting card movements.
-            Dates must be in YYYY-MM-DD format.
+    :param configuration: Configuration of the board (TrelloBoardConfiguration)
     """
 
-    stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, board_name=board_name)
+    stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=trello_connector, configuration=configuration)
 
     # Setting the function that tests if a card is active
     card_is_active_function = lambda c: not c.closed
-    if hasattr(settings, "CARD_IS_ACTIVE_FUNCTION"):
-        card_is_active_function = settings.CARD_IS_ACTIVE_FUNCTION
+    if configuration.card_is_active_function:
+        card_is_active_function = configuration.card_is_active_function
 
     # Suffix for the titles of the output file in case there is a
+    card_action_filter = configuration.card_action_filter
     in_date_interval_text = u""
-    if card_movements_filter:
-        if card_movements_filter[0] and card_movements_filter[1]:
-            in_date_interval_text = u" between dates {0} and {1}".format(card_movements_filter[0], card_movements_filter[1])
-        elif card_movements_filter[0]:
-            in_date_interval_text = u" since {0}".format(card_movements_filter[0])
-        elif card_movements_filter[1]:
-            in_date_interval_text = u" before {0}".format(card_movements_filter[1])
+    if card_action_filter:
+        if card_action_filter[0] and card_action_filter[1]:
+            in_date_interval_text = u" between dates {0} and {1}".format(card_action_filter[0], card_action_filter[1])
+        elif card_action_filter[0]:
+            in_date_interval_text = u" since {0}".format(card_action_filter[0])
+        elif card_action_filter[1]:
+            in_date_interval_text = u" before {0}".format(card_action_filter[1])
 
-    stats = stat_extractor.get_stats(card_is_active_function=card_is_active_function, card_movements_filter=card_movements_filter)
+    stats = stat_extractor.get_stats()
 
-    printer = Printer(u"results_for_{0}_board".format(board_name))
+    printer = Printer(u"results_for_{0}_board".format(configuration.board_name), configuration)
 
     printer.newline()
 
-    printer.p(u"# Measurements for {0}".format(board_name))
+    printer.p(u"# Measurements for {0}".format(configuration.board_name))
 
     printer.newline()
 
     # Board life time
-    printer.p(u"## General measurements for {0}".format(board_name))
+    printer.p(u"## General measurements for {0}".format(configuration.board_name))
     printer.p(u"- The board is {0} hours old".format(stats["board_life_time"]))
     printer.p(u"- Last card was created {0} hours ago".format(stats["last_card_creation_ago"]/3600.0))
 
@@ -52,7 +51,7 @@ def make(trello_connector, board_name, card_movements_filter=None):
     printer.p(u"- There are {0} tasks ({1} active / {2} inactive [see note 1]) (".format(len(stats["cards"]), len(stats["active_cards"]), len(stats["inactive_cards"])))
     printer.p(u"- There are {0} tasks in 'done' ({1} are inactive [see note 1])".format(len(stats["done_cards"]), len(stats["done_inactive_cards"])))
     printer.p(u"- {0} tasks per day or {1} tasks per hour".format(stats["done_cards_per_day"], stats["done_cards_per_hour"]))
-    printer.p(u"[note 1]: A card is active if meets this criterion: {0}".format(inspect.getsource(card_is_active_function)))
+    printer.p(u"[note 1]: A card is active if meets this criterion: {0}".format(configuration.card_is_active_function))
 
     printer.newline()
 
@@ -97,14 +96,15 @@ def make(trello_connector, board_name, card_movements_filter=None):
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["lead_time"]["avg"], stats["lead_time"]["std_dev"]))
 
     # Chart with times for all cards in each column
-    file_paths = trellochart.get_graphics(stats, board_name=board_name)
+    file_paths = trellochart.get_graphics(stats, configuration)
 
     printer.newline()
 
     # Custom workflows
     if stat_extractor.has_custom_workflows():
-        for custom_workflow_id, custom_workflow in stat_extractor.get_custom_workflows().items():
-            printer.p(u" ## Custom workflow {0}".format(custom_workflow["name"]))
+        for custom_workflow in stat_extractor.get_custom_workflows():
+            custom_workflow_id = custom_workflow.name
+            printer.p(u" ## Custom workflow {0}".format(custom_workflow.name))
             for card in stats["cards"]:
                 if hasattr(card, "custom_workflow_times") and\
                         custom_workflow_id in card.custom_workflow_times and\
@@ -112,7 +112,7 @@ def make(trello_connector, board_name, card_movements_filter=None):
                     card_line = u"{0}".format(card.custom_workflow_times[custom_workflow_id])
                     printer.p(u"- {0} '{1}': {2}".format(card.id, _short_card_name(card), card_line))
 
-    printer.newline()
+            printer.newline()
 
     # Time each card has been in each column
     printer.p(u"# Time each card has been in each column (hours){0}".format(in_date_interval_text))
@@ -149,9 +149,9 @@ def make(trello_connector, board_name, card_movements_filter=None):
 
         printer.newline()
 
-    printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]))
-    printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]))
-    printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]))
+    printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]["path"]))
+    printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]["path"]))
+    printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]["path"]))
 
     printer.newline()
 
