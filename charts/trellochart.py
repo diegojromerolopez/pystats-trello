@@ -20,25 +20,25 @@ def get_graphics(stats, configuration):
     :return:
     """
 
-    lists = stats["lists"]
+    lists = stats["board_lists"]
 
     board_name = configuration.board_name
 
     # Time by list
     chart_title = u"Average time for all board cards by list for {0}".format(board_name)
-    time_by_list_chart_ = avg_by_list_chart(chart_title, lists, stats, "time_by_list")
+    time_by_list_chart_ = avg_by_list_chart(chart_title, lists, stats, "time")
     time_chart_file_path = _get_chart_path(u"time_by_list", configuration)
     time_by_list_chart_.render_to_png(time_chart_file_path)
 
     # Forward by list
     chart_title = u"Number of times a list is the source of a card forward movement in {0}".format(board_name)
-    forward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "forward_movements_by_list")
+    forward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "forward_moves")
     forward_file_path = _get_chart_path(u"forward_movements_by_list", configuration)
     forward_by_list_chart_.render_to_png(forward_file_path)
 
     # Backwards by list
     chart_title = u"Number of times a list is the source of a card movement to backwards in {0}".format(board_name)
-    backward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "backward_movements_by_list")
+    backward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "backward_moves")
     backward_file_path = _get_chart_path(u"backward_movements_by_list", configuration)
     backward_by_list_chart_.render_to_png(backward_file_path)
 
@@ -55,7 +55,7 @@ def avg_by_list_chart(chart_title, lists, stats, measurement):
     i = 1
     for list_ in lists:
         list_name = list_.name.decode("utf-8")
-        line_chart.add(list_name, stats[measurement][list_.id]["avg"])
+        line_chart.add(list_name, stats["lists"][list_.id][measurement]["avg"])
         i += 1
     return line_chart
 
@@ -66,6 +66,6 @@ def number_by_list_chart(chart_title, lists, stats, measurement):
     i = 1
     for list_ in lists:
         list_name = list_.name.decode("utf-8")
-        line_chart.add(list_name, stats[measurement][list_.id])
+        line_chart.add(list_name, stats["lists"][list_.id][measurement])
         i += 1
     return line_chart

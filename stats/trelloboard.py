@@ -26,10 +26,16 @@ class TrelloBoard(object):
                 if board.name.decode("utf-8") == board_name:
                     self.board_name = board_name
                     self.board = board
+                    self._fetch_members()
                     self._fetch_lists()
                     self._init_cards()
                     return True
             raise RuntimeWarning(u"Board {0} was not found. Are your credentials correct?".format(self.board_name))
+
+        # Fetching the members of this board
+        def _fetch_members(self):
+            self.members = self.board.all_members()
+            self.members_dict = {member.id: member for member in self.members}
 
         # Fetching of the board lists from Trello API
         def _fetch_lists(self):

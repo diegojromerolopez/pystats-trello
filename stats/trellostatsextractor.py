@@ -6,43 +6,22 @@ import re
 import settings
 from stats.debug import print_card
 from stats.trelloboard import TrelloBoard
+from stats.trellostats import TrelloStats
 
 
 class TrelloStatsExtractor(TrelloBoard):
 
+    # TrelloStatsExtractor initialization
     def __init__(self, trello_connector, configuration):
         self.configuration = configuration
+
         super(TrelloStatsExtractor, self).__init__(trello_connector, configuration)
 
-    # Computes the statistics of the cards.
-    # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
-    # The other metrics are absolute values.
-    def get_stats(self):
-
-        def add_statistic_summary(value_list):
-            return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
-
-        def statistic_summary_by_list(stat_by_list):
-            stats_summary_by_list = {}
-            for list_name_, list_times_ in stat_by_list.items():
-                stats_summary_by_list[list_name_] = add_statistic_summary(list_times_)
-
-            return stats_summary_by_list
-
-        stats = self.get_full_stats()
-
-        # Change the values for its mean and standard deviation
-        stats.update(
-            {
-                "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
-            }
-        )
-
-        return stats
+        self.stats = TrelloStats(self)
 
     # Compute the full stats of the board.
     # That is, it computes the concrete values for each measure.
-    def get_full_stats(self):
+    def get_stats(self):
         # Function that checks if a card is still active
         card_is_active_function = self.configuration.card_is_active_function
 
@@ -53,138 +32,80 @@ class TrelloStatsExtractor(TrelloBoard):
         def card_is_done(_card):
             return _card.idList == self.done_list.id
 
-        # Each one of the time of each card in each list
-        time_by_list = {list_.id: [] for list_ in self.lists}
-
-        # Forward or backward movements
-        forward_list = {list_.id: 0 for list_ in self.lists}
-        backward_list = {list_.id: 0 for list_ in self.lists}
-
-        cycle_time = {}
-        lead_time = {}
-
-        # Active cards by our definition given by the lambda function
-        active_cards = []
-
-        # Cards that are not active
-        inactive_cards = []
-        done_inactive_cards = []
-
-        # Closed cards
-        closed_cards = []
-
-        # Closed done cards
-        closed_done_cards = []
-
-        # Done cards
-        done_cards = []
-
-        # We store card_creation_datetimes to extract min datetime
-        card_creation_datetimes = []
-
-        # Board last activity to computer board life time
-        board_last_activity = None
-
         num_cards = len(self.cards)
         i = 1
         for card in self.cards:
 
-            # Test if the card is closed
-            if card.closed:
-                closed_cards.append(card)
-                # If the card is closed, test if was closed in the "done" list
-                if card_is_done(card):
-                    closed_done_cards.append(card)
+            # Is the card done?
+            card.is_done = card_is_done(card)
+
+            # Test if the card is closed (i. e. archived)
+            self.stats.update_closed_cards(card)
 
             # Custom filter for only considering cards we want. By default it should be "not card.closed", but we
             # give programmers the option to customize this parameter
             if card_is_active_function(card):
                 print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
+
                 card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list,
                                                             tz=settings.TIMEZONE, time_unit="hours",
                                                             card_movements_filter=card_movements_filter)
 
+                card.lead_time = None
+                card.cycle_time = None
+
                 # If the card is done, compute lead and cycle time
-                if card_is_done(card):
+                if card.is_done:
                     #  Lead time (time between creation in board to reaching "Done" state)
                     card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
-                    lead_time[card.id] = card.lead_time
+
                     # Cycle time (time between development and reaching "Done" state)
                     card.cycle_time = sum(
                         [list_stats["time"] if list_id in self.cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
                     )
-                    cycle_time[card.id] = card.cycle_time
-                    done_cards.append(card)
+
+                    self.stats.update_done_cards(card)
 
                 # Add this card stats to each global stat
                 for list_ in self.lists:
                     list_id = list_.id
                     card_stats_by_list = card.stats_by_list[list_id]
-                    time_by_list[list_id].append(card_stats_by_list["time"])
-                    forward_list[list_id] += card_stats_by_list["forward_moves"]
-                    backward_list[list_id] += card_stats_by_list["backward_moves"]
+                    # List stats
+                    self.stats.lists[list_id]["time"]["by_card"][card.id] = card_stats_by_list["time"]
+                    self.stats.lists[list_id]["forward_moves"] += card_stats_by_list["forward_moves"]
+                    self.stats.lists[list_id]["backward_moves"] += card_stats_by_list["backward_moves"]
 
                 # Comments
                 card.s_e = self._get_spent_estimated(card)
 
                 # Card creation datetime
-                card_creation_datetimes.append(card.create_date)
+                self.stats.card_creation_datetimes.append(card.create_date)
 
-                # Getting the last activity in the board
-                if board_last_activity is None or board_last_activity < card.date_last_activity:
-                    board_last_activity = card.date_last_activity
-
-                # Compute custom workflows (if needed)
-                card.custom_workflow_times = self._get_custom_workflow_times(card)
+                self.stats.active_cards[card.id] = {
+                    "id": card.id,
+                    "object": card,
+                    "custom_workflow_times": self._get_custom_workflow_times(card),
+                    "stats_by_list": card.stats_by_list,
+                    "lead": card.lead_time,
+                    "cycle": card.cycle_time,
+                    "spent": card.s_e["spent"],
+                    "estimated": card.s_e["estimated"],
+                    "done": card.is_done,
+                }
 
                 # Add this card to active cards
-                active_cards.append(card)
+                self.stats.active_card_list.append(card)
+
+                # Getting the last activity in the board
+                self.stats.update_board_last_activity(card)
 
             # Inactive cards
             else:
-                inactive_cards.append(card)
-                if card_is_done(card):
-                    done_inactive_cards.append(card)
+                self.stats.update_inactive_cards(card)
 
             i += 1
 
-        now = datetime.datetime.now(settings.TIMEZONE)
-        first_card_creation_datetime = min(card_creation_datetimes)
-        last_card_creation_datetime = max(card_creation_datetimes)
-        board_life_time = (board_last_activity - first_card_creation_datetime).total_seconds()
-
-        stats = {
-            "lists": self.lists,
-            "cards": self.cards,
-            "active_card_stats_by_list": {card.id: card.stats_by_list for card in active_cards},
-            "active_card_spent_estimated_times": {card.id: card.s_e for card in active_cards},
-            "active_cards": active_cards,
-            "done_inactive_cards": done_inactive_cards,
-            "inactive_cards": inactive_cards,
-            "closed_cards": closed_cards,
-            "closed_done_cards": closed_done_cards,
-            "done_cards": done_cards,
-            "done_cards_per_hour": len(done_cards) / (board_life_time/60.0),
-            "done_cards_per_day": len(done_cards)/(board_life_time/3600.0),
-            "board_life_time": board_life_time / 60.0,
-            "board_last_activity": board_last_activity,
-            "last_card_creation": last_card_creation_datetime,
-            "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
-            "time_by_list": time_by_list,
-            "backward_movements_by_list": backward_list,
-            "forward_movements_by_list": forward_list,
-            "lead_time": {
-                "values": lead_time,
-                "avg": numpy.mean(lead_time.values()),
-                "std_dev": numpy.std(lead_time.values(), axis=0)
-            },
-            "cycle_time": {
-                "values": cycle_time,
-                "avg": numpy.mean(cycle_time.values()),
-                "std_dev": numpy.std(cycle_time.values(), axis=0)
-            },
-        }
-        return stats
+        return self.stats
 
     # Get specific workflow times
     def _get_custom_workflow_times(self, card):
@@ -229,21 +150,36 @@ class TrelloStatsExtractor(TrelloBoard):
     # in settings local by the use of a regular expression.
     def _get_spent_estimated(self, card):
         # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
-        if self.configuration.spent_estimated_time_card_comment_regex:
+        if not self.configuration.spent_estimated_time_card_comment_regex:
             return False
 
         comments = card.get_comments()
-        spent = None
-        estimated = None
+        spent = {"all": None, "by_member": {}}
+        estimated = {"all": None, "by_member": {}}
         # For each comment, find the desired pattern and extract the spent and estimated times
         for comment in comments:
+            # The spent/estimated values are in the content of each comment obeying the regex
             comment_content = comment["data"]["text"]
+
             matches = re.match(self.configuration.spent_estimated_time_card_comment_regex, comment_content)
             if matches:
-                if spent is None:
-                    spent = 0
-                spent += float(matches.group("spent"))
-                if estimated is None:
-                    estimated = 0
-                estimated += float(matches.group("estimated"))
+                comment_creator_id = comment["idMemberCreator"]
+                # Spent time (total and by member)
+                if spent["all"] is None:
+                    spent["all"] = 0
+                spent["all"] += float(matches.group("spent"))
+                spent["by_member"][comment_creator_id] = spent["by_member"].get(comment_creator_id, 0) + spent["by_member"].get(comment_creator_id, 0)
+
+                # Estimated time (total and by member)
+                if estimated["all"] is None:
+                    estimated["all"] = 0
+                estimated["all"] += float(matches.group("estimated"))
+                estimated["by_member"][comment_creator_id] = estimated["by_member"].get(comment_creator_id, 0) + estimated["by_member"].get(comment_creator_id, 0)
+
         return {"spent": spent, "estimated": estimated}
+
+
+    def _get_backward_movements_by_user(self, card):
+        members_id = card.idMembers
+        for member_id in members_id:
+            member = self.members_dict[member_id]
