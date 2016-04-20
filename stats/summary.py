@@ -131,7 +131,7 @@ def make(trello_connector, configuration):
 
     printer.newline()
 
-    if hasattr(settings, "SPENT_ESTIMATED_TIME_CARD_COMMENT_REGEX"):
+    if configuration.spent_estimated_time_card_comment_regex:
         printer.p(u"# Spent and estimated times for each card (in units given by plugin)")
 
         printer.p(u"Card_id Card_name CurrentList Spent Estimated")
