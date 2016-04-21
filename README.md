@@ -54,8 +54,6 @@ case could be different.
 
 Create a virtualenv and install requirements.txt there.
 
-
-
 ```shell
 $ virtualenv venv
 ```
@@ -132,8 +130,8 @@ OUTPUT_DIR: ./results/my-tasks
 # How to use it
 
 ```shell
+(venv)$ python stats_extractor.py <configuration_file>
 
-python stats_extractor.py <configuration_file>
 Where:
 - <configuration_file> is the file path of the configuration file with your preferences.
 ```
