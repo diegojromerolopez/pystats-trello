@@ -128,8 +128,8 @@ class TrelloStatsExtractor(TrelloBoard):
                     if idMember not in movements_by_member:
                         movements_by_member[idMember] = {"forward":0, "backward":0}
 
-                    backward_moves = card_stats_by_list["backward_moves"]/len(card.member_ids)
-                    forward_moves = card_stats_by_list["forward_moves"]/len(card.member_ids)
+                    backward_moves = sum(forward_list.values())/len(card.member_ids)
+                    forward_moves = sum(backward_list.values())/len(card.member_ids)
 
                     movements_by_member[idMember]["backward"] += backward_moves
                     movements_by_member[idMember]["forward"] += forward_moves
