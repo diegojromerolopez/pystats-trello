@@ -79,6 +79,15 @@ def make(trello_connector, configuration):
 
     printer.newline()
 
+    # Backward movements of tasks assigned to a user
+    printer.p(u"## Sum of backward movements by username in this board{0}".format(in_date_interval_text))
+    for member_id, member in stat_extractor.members_dict.items():
+        backward_movements = stats["backward_movements_by_user"].get(member_id)
+        if backward_movements:
+            printer.p(u"  - Backward movements of {0}'s tasks: {1}".format(member.username, backward_movements["total"]))
+
+    printer.newline()
+
     # Cycle time
     printer.p(u"## Cycle")
     printer.p(u"Time between development state and reaching 'Done' state{0}".format(in_date_interval_text))
@@ -96,7 +105,7 @@ def make(trello_connector, configuration):
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["lead_time"]["avg"], stats["lead_time"]["std_dev"]))
 
     # Chart with times for all cards in each column
-    file_paths = trellochart.get_graphics(stats, configuration)
+    file_paths = trellochart.get_graphics(stats, stat_extractor)
 
     printer.newline()
 
@@ -149,6 +158,7 @@ def make(trello_connector, configuration):
 
         printer.newline()
 
+    printer.p(u"Chart with number of pushed back tasks for each user".format(file_paths["backward_movements_by_user"]["path"]))
     printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]["path"]))
     printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]["path"]))
     printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]["path"]))

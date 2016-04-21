@@ -59,6 +59,7 @@ class TrelloStatsExtractor(TrelloBoard):
         # Forward or backward movements
         forward_list = {list_.id: 0 for list_ in self.lists}
         backward_list = {list_.id: 0 for list_ in self.lists}
+        backward_list_by_member = {}
 
         cycle_time = {}
         lead_time = {}
@@ -124,6 +125,14 @@ class TrelloStatsExtractor(TrelloBoard):
                     forward_list[list_id] += card_stats_by_list["forward_moves"]
                     backward_list[list_id] += card_stats_by_list["backward_moves"]
 
+                    for idMember in card.member_ids:
+                        if idMember not in backward_list_by_member:
+                            backward_list_by_member[idMember] = {"lists": {}, "total": 0}
+                        if list_id not in backward_list_by_member[idMember]["lists"]:
+                            backward_list_by_member[idMember]["lists"][list_id] = 0
+                        backward_list_by_member[idMember]["lists"][list_id] += card_stats_by_list["backward_moves"]/len(card.member_ids)
+                        backward_list_by_member[idMember]["total"] += backward_list_by_member[idMember]["lists"][list_id]
+
                 # Comments
                 card.s_e = self._get_spent_estimated(card)
 
@@ -172,6 +181,7 @@ class TrelloStatsExtractor(TrelloBoard):
             "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
             "time_by_list": time_by_list,
             "backward_movements_by_list": backward_list,
+            "backward_movements_by_user": backward_list_by_member,
             "forward_movements_by_list": forward_list,
             "lead_time": {
                 "values": lead_time,
@@ -230,7 +240,7 @@ class TrelloStatsExtractor(TrelloBoard):
     def _get_spent_estimated(self, card):
         # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
         if self.configuration.spent_estimated_time_card_comment_regex:
-            return False
+            return {"spent": None, "estimated": None}
 
         comments = card.get_comments()
         spent = None

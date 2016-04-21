@@ -12,7 +12,7 @@ def _get_chart_path(chart_type, configuration):
     return file_path
 
 
-def get_graphics(stats, configuration):
+def get_graphics(stats, stat_extractor):
     """
     Prints a chart with the average time a card is in each column.
     :param stats: statistics generated with trellostats
@@ -22,6 +22,7 @@ def get_graphics(stats, configuration):
 
     lists = stats["lists"]
 
+    configuration = stat_extractor.configuration
     board_name = configuration.board_name
 
     # Time by list
@@ -42,10 +43,24 @@ def get_graphics(stats, configuration):
     backward_file_path = _get_chart_path(u"backward_movements_by_list", configuration)
     backward_by_list_chart_.render_to_png(backward_file_path)
 
+    # Backwards per user
+    chart_title = u"Number of pushed back tasks per user {0}".format(board_name)
+    backward_by_user_file_path = _get_chart_path(u"backward_movements_by_user", configuration)
+    backward_by_user_chart_ = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
+    i = 1
+    for member in stat_extractor.members:
+        member_name = member.username.decode("utf-8")
+        if not member.id in stats["backward_movements_by_user"]:
+            stats["backward_movements_by_user"][member.id] = {"total": 0}
+        backward_by_user_chart_.add(member_name, stats["backward_movements_by_user"][member.id]["total"])
+        i += 1
+    backward_by_user_chart_.render_to_png(backward_by_user_file_path)
+
     return {
         "time": {"object":time_by_list_chart_,"path": time_chart_file_path},
         "forward": {"object": forward_by_list_chart_, "path": forward_file_path},
-        "backward": {"object": backward_by_list_chart_, "path": backward_file_path}
+        "backward": {"object": backward_by_list_chart_, "path": backward_file_path},
+        "backward_movements_by_user": {"object": backward_by_user_chart_, "path": backward_file_path}
     }
 
 
