@@ -49,12 +49,34 @@
   - Backward movements: 0
 
 
+## Forward/backward movements movements by username in this board between dates <DATES>
+  - Forward movements of <USERNAME_1> tasks: 0
+  - Backward movements of <USERNAME_1> tasks: 2
+  - Forward movements of <USERNAME_2> tasks: 0
+  - Backward movements of <USERNAME_2> tasks: 1
+
+
 ## Cycle
 Time between development state and reaching 'Done' state.
+- <ID_TASK_1> <TASK_1>: 123.167729781
+- <ID_TASK_2> <TASK_2>: 522.978870219
+…
 - avg: 87.88505 h, std_dev: 70.4038598361
+
 ## Lead
 Time from start to end ('Done' state).
+- <ID_TASK_1> <TASK_1>: 123.167729781
+- <ID_TASK_2> <TASK_2>: 522.978870219
+…
 - avg: 91.6390803279 h, std_dev: 70.837852459
+
+
+ ## Custom workflow <CUSTOM_WORKFLOW_1>
+- <ID_TASK_1> ‘<TASK_1>’: 53.938404991
+- <ID_TASK_2> ‘<TASK_2>’: 53.9401145989
+…
+- <ID_TASK_N> ‘<TASK_N>’: 53.9401145989
+- avg: 26.1469413163 h, std_dev: 23.1865391263
 
 
 # Time each card has been in each column (hours)
@@ -99,9 +121,7 @@ Card_id Card_name CurrentList Spent Estimated
 ...
 
 
-Chart with average card time in each list created in <pygal.graph.horizontalbar.HorizontalBar object at 0x1077d81d0>
-Chart with average time a list is a forward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x106ba6050>
-Chart with average time a list is a backward destination in <pygal.graph.horizontalbar.HorizontalBar object at 0x108373350>
+Charts done
 
 
 --- END OF FILE ---

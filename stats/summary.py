@@ -95,7 +95,7 @@ def make(trello_connector, configuration):
     printer.p(u"## Cycle")
     printer.p(u"Time between development state and reaching 'Done' state{0}".format(in_date_interval_text))
     for card in stats["done_cards"]:
-        printer.p(u"- {0} {1} ({2}): {3}".format(card.id, _short_card_name(card), card.create_date, stats["cycle_time"]["values"][card.id]))
+        printer.p(u"- {0} {1}: {2}".format(card.id, _short_card_name(card), stats["cycle_time"]["values"][card.id]))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["cycle_time"]["avg"], stats["cycle_time"]["std_dev"]))
 
     printer.newline()
@@ -125,7 +125,8 @@ def make(trello_connector, configuration):
                     workflow_times.append(card.custom_workflow_times[custom_workflow_id])
                     card_line = u"{0}".format(card.custom_workflow_times[custom_workflow_id])
                     printer.p(u"- {0} '{1}': {2}".format(card.id, _short_card_name(card), card_line))
-            printer.p(u"- avg: {0} h, std_dev: {1}".format(numpy.mean(workflow_times), numpy.std(workflow_times, axis=0)))
+            if len(workflow_times) > 0:
+                printer.p(u"- avg: {0} h, std_dev: {1}".format(numpy.mean(workflow_times), numpy.std(workflow_times, axis=0)))
             printer.newline()
 
     # Time each card has been in each column

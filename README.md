@@ -127,9 +127,18 @@ returns a summary of stats of the board_name.
 
 See output example file in [example result file](result-examples/results-for-board-example-datetime.txt).
 
-This is the card time by list chart:
+## Card time by list chart
 
 ![Average time by list for board cards](result-examples/results-time-by-list-example.png)
+
+## Pushed back cards by list
+
+![Average time by list for board cards](result-examples/backward_movements_by_list.png)
+
+## Move forward cards by list
+
+![Average time by list for board cards](result-examples/forward_movements_by_list.png)
+
 
 # Questions? Suggestions?
 
