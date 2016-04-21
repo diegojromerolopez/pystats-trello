@@ -239,7 +239,7 @@ class TrelloStatsExtractor(TrelloBoard):
     # in settings local by the use of a regular expression.
     def _get_spent_estimated(self, card):
         # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
-        if self.configuration.spent_estimated_time_card_comment_regex:
+        if not self.configuration.spent_estimated_time_card_comment_regex:
             return {"spent": None, "estimated": None}
 
         comments = card.get_comments()
