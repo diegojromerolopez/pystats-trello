@@ -54,8 +54,25 @@ case could be different.
 
 Create a virtualenv and install requirements.txt there.
 
+
+
+```shell
+$ virtualenv venv
+```
+
 Activate the **virtualenv** and follow next steps.
 
+```shell
+$ . venv/bin/activate
+```
+
+Install requirements
+
+```shell
+(venv)$ pip install -r requirements
+```
+
+That's all, now configure your API keys and configure your board.
 
 # Configuration
 
