@@ -124,6 +124,7 @@ class TrelloStatsExtractor(TrelloBoard):
                     forward_list[list_id] += card_stats_by_list["forward_moves"]
                     backward_list[list_id] += card_stats_by_list["backward_moves"]
 
+                # Forward and backward movements by member of the card
                 for idMember in card.member_ids:
                     if idMember not in movements_by_member:
                         movements_by_member[idMember] = {"forward":0, "backward":0}
@@ -133,9 +134,6 @@ class TrelloStatsExtractor(TrelloBoard):
 
                     movements_by_member[idMember]["backward"] += backward_moves
                     movements_by_member[idMember]["forward"] += forward_moves
-
-
-
 
                 # Comments
                 card.s_e = self._get_spent_estimated(card)
