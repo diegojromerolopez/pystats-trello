@@ -59,7 +59,7 @@ class TrelloStatsExtractor(TrelloBoard):
         # Forward or backward movements
         forward_list = {list_.id: 0 for list_ in self.lists}
         backward_list = {list_.id: 0 for list_ in self.lists}
-        backward_list_by_member = {}
+        movements_by_member = {}
 
         cycle_time = {}
         lead_time = {}
@@ -102,8 +102,7 @@ class TrelloStatsExtractor(TrelloBoard):
             if card_is_active_function(card):
                 print_card(card, "{0} {i} of {num_cards}".format(card.name, i=i, num_cards=num_cards))
                 card.stats_by_list = card.get_stats_by_list(lists=self.lists, list_cmp=self.list_cmp, done_list=self.done_list,
-                                                            tz=settings.TIMEZONE, time_unit="hours",
-                                                            card_movements_filter=card_movements_filter)
+                                                            time_unit="hours", card_movements_filter=card_movements_filter)
 
                 # If the card is done, compute lead and cycle time
                 if card_is_done(card):
@@ -125,13 +124,18 @@ class TrelloStatsExtractor(TrelloBoard):
                     forward_list[list_id] += card_stats_by_list["forward_moves"]
                     backward_list[list_id] += card_stats_by_list["backward_moves"]
 
-                    for idMember in card.member_ids:
-                        if idMember not in backward_list_by_member:
-                            backward_list_by_member[idMember] = {"lists": {}, "total": 0}
-                        if list_id not in backward_list_by_member[idMember]["lists"]:
-                            backward_list_by_member[idMember]["lists"][list_id] = 0
-                        backward_list_by_member[idMember]["lists"][list_id] += card_stats_by_list["backward_moves"]/len(card.member_ids)
-                        backward_list_by_member[idMember]["total"] += backward_list_by_member[idMember]["lists"][list_id]
+                for idMember in card.member_ids:
+                    if idMember not in movements_by_member:
+                        movements_by_member[idMember] = {"forward":0, "backward":0}
+
+                    backward_moves = card_stats_by_list["backward_moves"]/len(card.member_ids)
+                    forward_moves = card_stats_by_list["forward_moves"]/len(card.member_ids)
+
+                    movements_by_member[idMember]["backward"] += backward_moves
+                    movements_by_member[idMember]["forward"] += forward_moves
+
+
+
 
                 # Comments
                 card.s_e = self._get_spent_estimated(card)
@@ -181,7 +185,7 @@ class TrelloStatsExtractor(TrelloBoard):
             "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
             "time_by_list": time_by_list,
             "backward_movements_by_list": backward_list,
-            "backward_movements_by_user": backward_list_by_member,
+            "movements_by_user": movements_by_member,
             "forward_movements_by_list": forward_list,
             "lead_time": {
                 "values": lead_time,

@@ -43,24 +43,30 @@ def get_graphics(stats, stat_extractor):
     backward_file_path = _get_chart_path(u"backward_movements_by_list", configuration)
     backward_by_list_chart_.render_to_png(backward_file_path)
 
+    # Forwards - Backwards per user
+    chart_title = u"Forwarded - Pushed back tasks per user {0}".format(board_name)
+    mov_difference_by_user_file_path = _get_chart_path(u"diff_movements_by_user", configuration)
+    mov_difference_by_user_chart = member_chart(chart_title, mov_difference_by_user_file_path, stats["movements_by_user"], stat_extractor.members, key="difference")
+
+    # Forwards per user
+    chart_title = u"Forward movement on tasks per user {0}".format(board_name)
+    forwarded_by_user_file_path = _get_chart_path(u"forward_movements_by_user", configuration)
+    forwarded_by_user_chart = member_chart(chart_title, forwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
+                 key="forward")
+
     # Backwards per user
-    chart_title = u"Number of pushed back tasks per user {0}".format(board_name)
-    backward_by_user_file_path = _get_chart_path(u"backward_movements_by_user", configuration)
-    backward_by_user_chart_ = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
-    i = 1
-    for member in stat_extractor.members:
-        member_name = member.username.decode("utf-8")
-        if not member.id in stats["backward_movements_by_user"]:
-            stats["backward_movements_by_user"][member.id] = {"total": 0}
-        backward_by_user_chart_.add(member_name, stats["backward_movements_by_user"][member.id]["total"])
-        i += 1
-    backward_by_user_chart_.render_to_png(backward_by_user_file_path)
+    chart_title = u"Backward movements on tasks per user {0}".format(board_name)
+    backwarded_by_user_file_path = _get_chart_path(u"backward_movements_by_user", configuration)
+    backwarded_by_user_file_chart = member_chart(chart_title, backwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
+                 key="backward")
 
     return {
         "time": {"object":time_by_list_chart_,"path": time_chart_file_path},
         "forward": {"object": forward_by_list_chart_, "path": forward_file_path},
         "backward": {"object": backward_by_list_chart_, "path": backward_file_path},
-        "backward_movements_by_user": {"object": backward_by_user_chart_, "path": backward_file_path}
+        "forward_movements_by_user": {"object": forwarded_by_user_chart, "path": forwarded_by_user_file_path},
+        "backward_movements_by_user": {"object": backwarded_by_user_file_chart, "path": backwarded_by_user_file_path},
+        "difference_movements_by_user": {"object": mov_difference_by_user_chart, "path": mov_difference_by_user_file_path}
     }
 
 
@@ -84,3 +90,19 @@ def number_by_list_chart(chart_title, lists, stats, measurement):
         line_chart.add(list_name, stats[measurement][list_.id])
         i += 1
     return line_chart
+
+
+def member_chart(chart_title, file_path, stats_by_member, members, key="forward"):
+    by_user_chart_ = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
+    for member in members:
+        member_name = member.username.decode("utf-8")
+        if not member.id in stats_by_member:
+            stats_by_member[member.id] = {"forward": 0, "backward": 0.}
+
+        if key == "difference":
+            value = stats_by_member[member.id]["forward"] - stats_by_member[member.id]["backward"]
+        else:
+            value = stats_by_member[member.id][key]
+        by_user_chart_.add(u"{0}".format(member_name), value)
+        by_user_chart_.render_to_png(file_path)
+    return by_user_chart_

@@ -2,8 +2,10 @@
 
 import importlib
 import pytz
+from trello.configuration import Configuration
 
 TIMEZONE = pytz.timezone('Europe/Madrid')
+Configuration.TIMEZONE = 'Europe/Madrid'
 
 try:
     settings_local = importlib.import_module('settings_local')

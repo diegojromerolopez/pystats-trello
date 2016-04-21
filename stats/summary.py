@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import numpy
+
 from charts import trellochart
 from printer.printer import Printer
 from stats import trellostatsextractor
@@ -80,11 +82,12 @@ def make(trello_connector, configuration):
     printer.newline()
 
     # Backward movements of tasks assigned to a user
-    printer.p(u"## Sum of backward movements by username in this board{0}".format(in_date_interval_text))
+    printer.p(u"## Forward/backward movements movements by username in this board{0}".format(in_date_interval_text))
     for member_id, member in stat_extractor.members_dict.items():
-        backward_movements = stats["backward_movements_by_user"].get(member_id)
-        if backward_movements:
-            printer.p(u"  - Backward movements of {0}'s tasks: {1}".format(member.username, backward_movements["total"]))
+        movements = stats["movements_by_user"].get(member_id)
+        if movements:
+            printer.p(u"  - Forward movements of {0}'s tasks: {1}".format(member.username, movements["forward"]))
+            printer.p(u"  - Backward movements of {0}'s tasks: {1}".format(member.username, movements["backward"]))
 
     printer.newline()
 
@@ -92,7 +95,7 @@ def make(trello_connector, configuration):
     printer.p(u"## Cycle")
     printer.p(u"Time between development state and reaching 'Done' state{0}".format(in_date_interval_text))
     for card in stats["done_cards"]:
-        printer.p(u"- {0} {1}: {2}".format(card.id, _short_card_name(card), stats["cycle_time"]["values"][card.id]))
+        printer.p(u"- {0} {1} ({2}): {3}".format(card.id, _short_card_name(card), card.create_date, stats["cycle_time"]["values"][card.id]))
     printer.p(u"- avg: {0} h, std_dev: {1}".format(stats["cycle_time"]["avg"], stats["cycle_time"]["std_dev"]))
 
     printer.newline()
@@ -114,13 +117,15 @@ def make(trello_connector, configuration):
         for custom_workflow in stat_extractor.get_custom_workflows():
             custom_workflow_id = custom_workflow.name
             printer.p(u" ## Custom workflow {0}".format(custom_workflow.name))
+            workflow_times = []
             for card in stats["cards"]:
                 if hasattr(card, "custom_workflow_times") and\
                         custom_workflow_id in card.custom_workflow_times and\
                         not card.custom_workflow_times[custom_workflow_id] is None:
+                    workflow_times.append(card.custom_workflow_times[custom_workflow_id])
                     card_line = u"{0}".format(card.custom_workflow_times[custom_workflow_id])
                     printer.p(u"- {0} '{1}': {2}".format(card.id, _short_card_name(card), card_line))
-
+            printer.p(u"- avg: {0} h, std_dev: {1}".format(numpy.mean(workflow_times), numpy.std(workflow_times, axis=0)))
             printer.newline()
 
     # Time each card has been in each column
@@ -142,26 +147,37 @@ def make(trello_connector, configuration):
 
     if configuration.spent_estimated_time_card_comment_regex:
         printer.p(u"# Spent and estimated times for each card (in units given by plugin)")
-
+        spent_times = []
+        estimated_times = []
         printer.p(u"Card_id Card_name CurrentList Spent Estimated")
         for card in stats["active_cards"]:
+            # Short name of the card
             card_name = _short_card_name(card)
+
+            # List name
             list_name = stat_extractor.lists_dict[card.idList].name.decode("utf-8")
+
+            # Spent/Estimated times of the card
             card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
+
             card_spent_time = card_s_e_times["spent"] if not card_s_e_times["spent"] is None else u"N/A"
             card_estimated_time = card_s_e_times["estimated"] if not card_s_e_times["estimated"] is None else u"N/A"
+
+            if card_spent_time != "N/A":
+                spent_times.append(card_spent_time)
+            if card_estimated_time != "N/A":
+                estimated_times.append(card_estimated_time)
 
             printer.p(u"- {0} '{1}' ({2}): {3} {4}".format(
                     card.id, card_name, list_name, card_spent_time, card_estimated_time
                 )
             )
+        printer.p(u"- Spent Times avg: {0} h, std_dev: {1}".format(numpy.mean(spent_times), numpy.std(spent_times, axis=0)))
+        printer.p(u"- Estimated Times avg: {0} h, std_dev: {1}".format(numpy.mean(estimated_times), numpy.std(estimated_times, axis=0)))
 
         printer.newline()
 
-    printer.p(u"Chart with number of pushed back tasks for each user".format(file_paths["backward_movements_by_user"]["path"]))
-    printer.p(u"Chart with average card time in each list created in {0}".format(file_paths["time"]["path"]))
-    printer.p(u"Chart with average time a list is a forward destination in {0}".format(file_paths["forward"]["path"]))
-    printer.p(u"Chart with average time a list is a backward destination in {0}".format(file_paths["backward"]["path"]))
+    printer.p(u"Charts done")
 
     printer.newline()
 
