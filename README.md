@@ -135,7 +135,7 @@ See output example file in [example result file](result-examples/results-for-boa
 
 ![Average time by list for board cards](result-examples/backward_movements_by_list.png)
 
-## Move forward cards by list
+## Moved forward cards by list
 
 ![Average time by list for board cards](result-examples/forward_movements_by_list.png)
 
