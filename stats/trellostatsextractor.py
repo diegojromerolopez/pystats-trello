@@ -15,6 +15,12 @@ class TrelloStatsExtractor(TrelloBoard):
         self.configuration = configuration
         super(TrelloStatsExtractor, self).__init__(trello_connector, configuration)
 
+        self.spent_month_time_by_user = {member.id: {} for member in self.members}
+        self.spent_week_time_by_user = {member.id: {} for member in self.members}
+
+        self.estimated_month_time_by_user = {member.id: {} for member in self.members}
+        self.estimated_week_time_by_user = {member.id: {} for member in self.members}
+
     # Computes the statistics of the cards.
     # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
     # The other metrics are absolute values.
@@ -237,6 +243,7 @@ class TrelloStatsExtractor(TrelloBoard):
     # This plugins has a format (plus! <spent>/<estimated> in case of Plus for Trello) and this format can be defined
     # in settings local by the use of a regular expression.
     def _get_spent_estimated(self, card):
+
         # If there is no defined regex with the format of spent/estimated comment in cards, don't fetch comments
         if not self.configuration.spent_estimated_time_card_comment_regex:
             return {"spent": None, "estimated": None}
@@ -279,26 +286,46 @@ class TrelloStatsExtractor(TrelloBoard):
                 comment_creation_date = comment_creation_datetime.date()
 
                 # Spent/Estimated by month
-                month = comment_creation_date.month
+                month = comment_creation_date.strftime("%Y-M%m")
                 if month not in times["by_user"][comment_creator_id]["by_month"]:
                     times["by_user"][comment_creator_id]["by_month"][month] = {"spent": 0, "estimated": 0}
+
+                # Spent by month
                 times["by_user"][comment_creator_id]["by_month"][month]["spent"] += spent
-                times["by_user"][comment_creator_id]["by_month"][month]["estimated"] += spent
+                if month not in self.spent_month_time_by_user[comment_creator_id]:
+                    self.spent_month_time_by_user[comment_creator_id][month] = 0
+                self.spent_month_time_by_user[comment_creator_id][month] += spent
+
+                # Estimated by month
+                times["by_user"][comment_creator_id]["by_month"][month]["estimated"] += estimated
+                if month not in self.estimated_month_time_by_user[comment_creator_id]:
+                    self.estimated_month_time_by_user[comment_creator_id][month] = 0
+                self.estimated_month_time_by_user[comment_creator_id][month] += estimated
 
                 # Spent/Estimated by week of year
                 week_number = "{0}-W{1}".format(comment_creation_date.year, comment_creation_date.isocalendar()[1])
                 if week_number not in times["by_user"][comment_creator_id]["by_week"]:
                     date_week_starts = datetime.datetime.strptime(week_number + '-0', "%Y-W%W-%w")
                     times["by_user"][comment_creator_id]["by_week"][week_number] = {"week_starts_at": date_week_starts.strftime("%Y-%m-%d"), "spent": 0, "estimated": 0}
+
+                # Spent by week of year
                 times["by_user"][comment_creator_id]["by_week"][week_number]["spent"] += spent
-                times["by_user"][comment_creator_id]["by_week"][week_number]["estimated"] += spent
+                if week_number not in self.spent_week_time_by_user[comment_creator_id]:
+                    self.spent_week_time_by_user[comment_creator_id][week_number] = 0
+                self.spent_week_time_by_user[comment_creator_id][week_number] += spent
+
+                times["by_user"][comment_creator_id]["by_week"][week_number]["estimated"] += estimated
+                # Estimated by week of year
+                if week_number not in self.estimated_week_time_by_user[comment_creator_id]:
+                    self.estimated_week_time_by_user[comment_creator_id][week_number] = 0
+                self.estimated_week_time_by_user[comment_creator_id][week_number] += estimated
 
                 # Spent/Estimated by day of year
                 yyyymmdd = comment_creation_date.strftime("%Y-%m-%d")
                 if yyyymmdd not in times["by_user"][comment_creator_id]["by_day"]:
                     times["by_user"][comment_creator_id]["by_day"][yyyymmdd] = {"spent": 0, "estimated": 0}
                 times["by_user"][comment_creator_id]["by_day"][yyyymmdd]["spent"] += spent
-                times["by_user"][comment_creator_id]["by_day"][yyyymmdd]["estimated"] += spent
+                times["by_user"][comment_creator_id]["by_day"][yyyymmdd]["estimated"] += estimated
 
         times["total"] = {"spent": total_spent, "estimated": total_estimated}
 

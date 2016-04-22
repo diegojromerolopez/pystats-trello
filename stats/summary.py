@@ -130,7 +130,7 @@ def make(trello_connector, configuration):
             printer.newline()
 
     # Time each card has been in each column
-    printer.p(u"# Time each card has been in each column (hours){0}".format(in_date_interval_text))
+    printer.p(u"## Time each card has been in each column (hours){0}".format(in_date_interval_text))
 
     lists_header = u""
     for list_ in stats["lists"]:
@@ -146,37 +146,9 @@ def make(trello_connector, configuration):
 
     printer.newline()
 
-    if configuration.spent_estimated_time_card_comment_regex:
-        printer.p(u"# Total spent and estimated times for each card (in units given by plugin)")
-        spent_times = []
-        estimated_times = []
-        printer.p(u"Card_id Card_name CurrentList Spent Estimated")
-        for card in stats["active_cards"]:
-            # Short name of the card
-            card_name = _short_card_name(card)
+    _show_total_spent_estimated_information(stats, stat_extractor, printer)
 
-            # List name
-            list_name = stat_extractor.lists_dict[card.idList].name.decode("utf-8")
-
-            # Spent/Estimated times of the card
-            card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
-
-            card_spent_time = card_s_e_times["total"]["spent"] if not card_s_e_times["total"]["spent"] is None else u"N/A"
-            card_estimated_time = card_s_e_times["total"]["estimated"] if not card_s_e_times["total"]["estimated"] is None else u"N/A"
-
-            if card_spent_time != "N/A":
-                spent_times.append(card_spent_time)
-            if card_estimated_time != "N/A":
-                estimated_times.append(card_estimated_time)
-
-            printer.p(u"- {0} '{1}' ({2}): {3} {4}".format(
-                    card.id, card_name, list_name, card_spent_time, card_estimated_time
-                )
-            )
-        printer.p(u"- Spent Times avg: {0} h, std_dev: {1}".format(numpy.mean(spent_times), numpy.std(spent_times, axis=0)))
-        printer.p(u"- Estimated Times avg: {0} h, std_dev: {1}".format(numpy.mean(estimated_times), numpy.std(estimated_times, axis=0)))
-
-        printer.newline()
+    _show_spent_estimated_time_by_user(stats, stat_extractor, printer)
 
     printer.p(u"Charts done")
 
@@ -185,6 +157,97 @@ def make(trello_connector, configuration):
     printer.p(u"--- END OF FILE ---")
 
     printer.flush()
+
+
+def _show_total_spent_estimated_information(stats, stat_extractor, printer):
+    """
+    Show total spent and estimated information
+    :param stats:
+    :param stat_extractor:
+    :param printer:
+    :return:
+    """
+
+    def get_number_or_na(value):
+        if value is None:
+            return "N/A"
+        return value
+
+    if not stat_extractor.configuration.spent_estimated_time_card_comment_regex:
+        return False
+
+    printer.p(u"## Total spent and estimated times for each card (in units given by plugin)")
+    spent_times = []
+    estimated_times = []
+    printer.p(u"Card_id Card_name CurrentList Spent Estimated")
+    for card in stats["active_cards"]:
+        # Short name of the card
+        card_name = _short_card_name(card)
+        # List name
+        list_name = stat_extractor.lists_dict[card.idList].name.decode("utf-8")
+        # Spent/Estimated times of the card
+        card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
+        card_spent_time = get_number_or_na(card_s_e_times["total"]["spent"])
+        card_estimated_time = get_number_or_na(card_s_e_times["total"]["estimated"])
+
+        if card_spent_time != "N/A":
+            spent_times.append(card_spent_time)
+        if card_estimated_time != "N/A":
+            estimated_times.append(card_estimated_time)
+
+        printer.p(u"- {0} '{1}' ({2}): {3} {4}".format(
+            card.id, card_name, list_name, card_spent_time, card_estimated_time
+        )
+        )
+
+    spent_times_avg = numpy.mean(spent_times)
+    spent_times_std_dev = numpy.std(spent_times, axis=0)
+
+    estimated_times_avg = numpy.mean(estimated_times)
+    estimated_times_std_dev = numpy.std(estimated_times, axis=0)
+
+    printer.p(
+        u"- Spent Times avg: {0} h, std_dev: {1}".format(spent_times_avg, spent_times_std_dev))
+
+    printer.p(u"- Estimated Times avg: {0} h, std_dev: {1}".format(estimated_times_avg,estimated_times_std_dev))
+
+    printer.newline()
+
+
+def _show_spent_estimated_time_by_user(stats, stat_extractor, printer):
+
+    printer.p(u"### Total spent times for each user per MONTH (in units given by plugin)")
+    for member in stat_extractor.members:
+        printer.p(u"- {0}".format(member.username))
+        for month, spent_time in stat_extractor.spent_month_time_by_user[member.id].items():
+            printer.p(u"  - {0}: {1}".format(month, spent_time))
+
+    printer.newline()
+
+    printer.p(u"### Total estimated times for each user per MONTH (in units given by plugin)")
+    for member in stat_extractor.members:
+        printer.p(u"- {0}".format(member.username))
+        for month, estimated_time in stat_extractor.estimated_month_time_by_user[member.id].items():
+            printer.p(u"  - {0}: {1}".format(month, estimated_time))
+
+    printer.newline()
+
+    printer.p(u"### Total spent times for each user per WEEK (in units given by plugin)")
+    for member in stat_extractor.members:
+        printer.p(u"- {0}".format(member.username))
+        for week, spent_time in stat_extractor.spent_week_time_by_user[member.id].items():
+            printer.p(u"  - {0}: {1}".format(week, spent_time))
+
+    printer.newline()
+
+    printer.p(u"### Total estimated times for each user per WEEK (in units given by plugin)")
+    for member in stat_extractor.members:
+        printer.p(u"- {0}".format(member.username))
+        for week, estimated_time in stat_extractor.estimated_week_time_by_user[member.id].items():
+            printer.p(u"  - {0}: {1}".format(week, estimated_time))
+
+    printer.newline()
+
 
 
 def _short_card_name(card, max_length=40):
