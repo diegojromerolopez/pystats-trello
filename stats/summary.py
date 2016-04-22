@@ -81,7 +81,7 @@ def make(trello_connector, configuration):
 
     printer.newline()
 
-    # Backward movements of tasks assigned to a user
+    # Backward and Forward movements of tasks assigned to a user
     printer.p(u"## Forward/backward movements movements by username in this board{0}".format(in_date_interval_text))
     for member_id, member in stat_extractor.members_dict.items():
         movements = stats["movements_by_user"].get(member_id)
@@ -147,7 +147,7 @@ def make(trello_connector, configuration):
     printer.newline()
 
     if configuration.spent_estimated_time_card_comment_regex:
-        printer.p(u"# Spent and estimated times for each card (in units given by plugin)")
+        printer.p(u"# Total spent and estimated times for each card (in units given by plugin)")
         spent_times = []
         estimated_times = []
         printer.p(u"Card_id Card_name CurrentList Spent Estimated")
@@ -161,8 +161,8 @@ def make(trello_connector, configuration):
             # Spent/Estimated times of the card
             card_s_e_times = stats["active_card_spent_estimated_times"][card.id]
 
-            card_spent_time = card_s_e_times["spent"] if not card_s_e_times["spent"] is None else u"N/A"
-            card_estimated_time = card_s_e_times["estimated"] if not card_s_e_times["estimated"] is None else u"N/A"
+            card_spent_time = card_s_e_times["total"]["spent"] if not card_s_e_times["total"]["spent"] is None else u"N/A"
+            card_estimated_time = card_s_e_times["total"]["estimated"] if not card_s_e_times["total"]["estimated"] is None else u"N/A"
 
             if card_spent_time != "N/A":
                 spent_times.append(card_spent_time)

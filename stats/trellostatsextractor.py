@@ -2,6 +2,7 @@
 import datetime
 import numpy
 import re
+import dateutil.parser
 
 import settings
 from stats.debug import print_card
@@ -57,9 +58,9 @@ class TrelloStatsExtractor(TrelloBoard):
         time_by_list = {list_.id: [] for list_ in self.lists}
 
         # Forward or backward movements
-        forward_list = {list_.id: 0 for list_ in self.lists}
-        backward_list = {list_.id: 0 for list_ in self.lists}
-        movements_by_member = {}
+        forward_movements_by_list = {list_.id: 0 for list_ in self.lists}
+        backward_movements_by_list = {list_.id: 0 for list_ in self.lists}
+        movements_by_member = {member.id: {"username": member.username, "forward": 0, "backward": 0} for member in self.members}
 
         cycle_time = {}
         lead_time = {}
@@ -121,21 +122,17 @@ class TrelloStatsExtractor(TrelloBoard):
                     list_id = list_.id
                     card_stats_by_list = card.stats_by_list[list_id]
                     time_by_list[list_id].append(card_stats_by_list["time"])
-                    forward_list[list_id] += card_stats_by_list["forward_moves"]
-                    backward_list[list_id] += card_stats_by_list["backward_moves"]
+                    forward_movements_by_list[list_id] += card_stats_by_list["forward_moves"]
+                    backward_movements_by_list[list_id] += card_stats_by_list["backward_moves"]
 
                 # Forward and backward movements by member of the card
+                card_forward_movements = sum([list_stats["forward_moves"] for list_id, list_stats in card.stats_by_list.items()])
+                card_backward_movements = sum([list_stats["backward_moves"] for list_id, list_stats in card.stats_by_list.items()])
                 for idMember in card.member_ids:
-                    if idMember not in movements_by_member:
-                        movements_by_member[idMember] = {"forward":0, "backward":0}
+                    movements_by_member[idMember]["backward"] += card_backward_movements
+                    movements_by_member[idMember]["forward"] += card_forward_movements
 
-                    backward_moves = sum(forward_list.values())/len(card.member_ids)
-                    forward_moves = sum(backward_list.values())/len(card.member_ids)
-
-                    movements_by_member[idMember]["backward"] += backward_moves
-                    movements_by_member[idMember]["forward"] += forward_moves
-
-                # Comments
+                # Comments S/E
                 card.s_e = self._get_spent_estimated(card)
 
                 # Card creation datetime
@@ -182,9 +179,9 @@ class TrelloStatsExtractor(TrelloBoard):
             "last_card_creation": last_card_creation_datetime,
             "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
             "time_by_list": time_by_list,
-            "backward_movements_by_list": backward_list,
+            "backward_movements_by_list": backward_movements_by_list,
             "movements_by_user": movements_by_member,
-            "forward_movements_by_list": forward_list,
+            "forward_movements_by_list": forward_movements_by_list,
             "lead_time": {
                 "values": lead_time,
                 "avg": numpy.mean(lead_time.values()),
@@ -244,18 +241,65 @@ class TrelloStatsExtractor(TrelloBoard):
         if not self.configuration.spent_estimated_time_card_comment_regex:
             return {"spent": None, "estimated": None}
 
+        times = {"total": {"spent": None, "estimated": None}, "by_user": {}}
+
         comments = card.get_comments()
-        spent = None
-        estimated = None
+        total_spent = None
+        total_estimated = None
         # For each comment, find the desired pattern and extract the spent and estimated times
         for comment in comments:
             comment_content = comment["data"]["text"]
             matches = re.match(self.configuration.spent_estimated_time_card_comment_regex, comment_content)
             if matches:
-                if spent is None:
-                    spent = 0
-                spent += float(matches.group("spent"))
-                if estimated is None:
-                    estimated = 0
-                estimated += float(matches.group("estimated"))
-        return {"spent": spent, "estimated": estimated}
+                # Comment creator
+                comment_creator_id = comment["idMemberCreator"]
+                if comment_creator_id not in times["by_user"]:
+                    times["by_user"][comment_creator_id] = {
+                        "total": {"spent": 0, "estimated": 0},
+                        "by_month": {},
+                        "by_week": {},
+                        "by_day": {}
+                    }
+
+                # Add to total spent
+                if total_spent is None:
+                    total_spent = 0
+                spent = float(matches.group("spent"))
+                total_spent += spent
+
+                # Add to total estimated
+                if total_estimated is None:
+                    total_estimated = 0
+                estimated = float(matches.group("estimated"))
+                total_estimated += estimated
+
+                # Comment iso timestamp conversion to datetime
+                comment_creation_iso_timestamp = comment["date"]
+                comment_creation_datetime = dateutil.parser.parse(comment_creation_iso_timestamp)
+                comment_creation_date = comment_creation_datetime.date()
+
+                # Spent/Estimated by month
+                month = comment_creation_date.month
+                if month not in times["by_user"][comment_creator_id]["by_month"]:
+                    times["by_user"][comment_creator_id]["by_month"][month] = {"spent": 0, "estimated": 0}
+                times["by_user"][comment_creator_id]["by_month"][month]["spent"] += spent
+                times["by_user"][comment_creator_id]["by_month"][month]["estimated"] += spent
+
+                # Spent/Estimated by week of year
+                week_number = "{0}-W{1}".format(comment_creation_date.year, comment_creation_date.isocalendar()[1])
+                if week_number not in times["by_user"][comment_creator_id]["by_week"]:
+                    date_week_starts = datetime.datetime.strptime(week_number + '-0', "%Y-W%W-%w")
+                    times["by_user"][comment_creator_id]["by_week"][week_number] = {"week_starts_at": date_week_starts.strftime("%Y-%m-%d"), "spent": 0, "estimated": 0}
+                times["by_user"][comment_creator_id]["by_week"][week_number]["spent"] += spent
+                times["by_user"][comment_creator_id]["by_week"][week_number]["estimated"] += spent
+
+                # Spent/Estimated by day of year
+                yyyymmdd = comment_creation_date.strftime("%Y-%m-%d")
+                if yyyymmdd not in times["by_user"][comment_creator_id]["by_day"]:
+                    times["by_user"][comment_creator_id]["by_day"][yyyymmdd] = {"spent": 0, "estimated": 0}
+                times["by_user"][comment_creator_id]["by_day"][yyyymmdd]["spent"] += spent
+                times["by_user"][comment_creator_id]["by_day"][yyyymmdd]["estimated"] += spent
+
+        times["total"] = {"spent": total_spent, "estimated": total_estimated}
+
+        return times
