@@ -125,7 +125,6 @@ class TrelloBoardConfiguration(object):
         TrelloBoardConfiguration._assert_value(board_name, "BOARD_NAME")
         TrelloBoardConfiguration._assert_value(development_list, "DEVELOPMENT_LIST")
         TrelloBoardConfiguration._assert_value(done_list, "DONE_LIST")
-        #TrelloBoardConfiguration._assert_value(card_action_filter, "CARD_ACTION_FILTER")
         TrelloBoardConfiguration._assert_value(card_is_active_function, "CARD_IS_ACTIVE_FUNCTION")
         TrelloBoardConfiguration._assert_value(comment_spent_estimated_time_regex, "COMMENT_SPENT_ESTIMATED_TIME_REGEX")
         TrelloBoardConfiguration._assert_value(output_dir, "OUTPUT_DIR")
