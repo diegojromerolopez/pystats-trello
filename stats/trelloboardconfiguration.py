@@ -11,29 +11,38 @@ class TrelloBoardConfiguration(object):
     def __init__(self, board_name, card_is_active_function,
                  development_list_name, done_list_name,
                  spent_estimated_time_comment_regex,
-                 output_dir,
+                 output_dir, censored=False,
                  card_action_filter=None,
                  custom_workflows=None):
 
         self.board_name = board_name
         self.card_is_active_function = card_is_active_function
+        self.card_is_active_function_code = card_is_active_function
+
         if self.card_is_active_function and type(self.card_is_active_function).__name__ != "function":
             lambda_card_is_active_function = "lambda card: ({0})".format(self.card_is_active_function)
             self.card_is_active_function = eval(lambda_card_is_active_function)
+
         self.development_list_name = development_list_name
         self.done_list_name = done_list_name
+
         if spent_estimated_time_comment_regex == "PLUS_FOR_TRELLO_REGEX":
             self.spent_estimated_time_card_comment_regex = self.__class__.PLUS_FOR_TRELLO_SPENT_ESTIMATED_TIME_COMMENT_REGEX
+
         self.card_action_filter = card_action_filter
+
         self.output_dir = output_dir
+        self.censored = censored
         self.custom_workflows = custom_workflows
 
+    # Loads the configuration file from a file to a TrelloBoardConfiguration
     @staticmethod
     def load_from_file(file_path):
         conf_file = open(file_path, "r")
         lines = conf_file.readlines()
         num_lines = len(lines)
 
+        censored = False
         board_name = None
         development_list = None
         done_list = None
@@ -118,6 +127,14 @@ class TrelloBoardConfiguration(object):
                     i += 1
                     param = None
 
+                # Output must be censored
+                if i < len(lines):
+                    matches = re.match(r"^CENSORED:\s*TRUE$",lines[i])
+                    if matches:
+                        censored = True
+                        i += 1
+                        matches = None
+
             i += 1
 
         conf_file.close()
@@ -130,6 +147,7 @@ class TrelloBoardConfiguration(object):
         TrelloBoardConfiguration._assert_value(output_dir, "OUTPUT_DIR")
 
         return TrelloBoardConfiguration(
+            censored=censored,
             board_name=board_name, card_action_filter=card_action_filter,
             card_is_active_function=card_is_active_function,
             development_list_name=development_list, done_list_name=done_list,

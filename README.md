@@ -39,7 +39,7 @@ Based on movement operations, it is computed the time each card is in each colum
 
 ## Spent and estimated times for each card
 
-Some plugins like Plus for Trello (http://www.plusfortrello.com/p/about.html)
+Some plugins like [Plus for Trello](http://www.plusfortrello.com/p/about.html)
 allow the insertion of spent and estimated time values in the comments of each
 card.
 
