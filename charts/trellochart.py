@@ -25,6 +25,16 @@ def get_graphics(stats, stat_extractor):
     time_chart_file_path = _get_chart_path(u"time_by_list", configuration)
     time_by_list_chart_.render_to_png(time_chart_file_path)
 
+    # Time by list in custom workflow context
+    if stat_extractor.has_custom_workflows():
+        for custom_workflow in stat_extractor.get_custom_workflows():
+            chart_title = u"Average time for all board cards by list for custom workflow {0} of {1}".format(custom_workflow.name, board_name)
+            wf_i_lists = custom_workflow.lists
+            wf_i_time_by_list_chart_ = avg_by_list_chart(chart_title, wf_i_lists, stats, "time_by_list")
+            wf_i_time_chart_file_path = _get_chart_path(u"wf_time_by_list_{0}".format(custom_workflow.name), configuration)
+            wf_i_time_by_list_chart_.render_to_png(wf_i_time_chart_file_path)
+
+
     # Forward by list
     chart_title = u"Number of times a list is the source of a card forward movement in {0}".format(board_name)
     forward_by_list_chart_ = number_by_list_chart(chart_title, lists, stats, "forward_movements_by_list")
@@ -178,5 +188,5 @@ def spent_estimated_time_chart_by_user(chart_title, stat_extractor, file_path, p
 def _get_chart_path(chart_type, configuration):
     board_name = configuration.board_name
     now_str = datetime.datetime.now(settings.TIMEZONE).strftime("%Y_%m_%d_%H_%M_%S")
-    file_path = u"{0}/{1}-{2}-{3}.png".format(configuration.output_dir, slugify(board_name), chart_type, now_str)
+    file_path = u"{0}/{1}-{2}-{3}.png".format(configuration.output_dir, slugify(board_name), slugify(chart_type), slugify(now_str))
     return file_path
