@@ -216,39 +216,23 @@ def _show_total_spent_estimated_information(stats, stat_extractor, printer):
 
 def _show_spent_estimated_time_by_user(stats, stat_extractor, printer):
 
-    printer.p(u"### Total spent times for each user per MONTH (in units given by plugin)")
+    printer.p(u"### Total spent/estimated times for each user per MONTH (in units given by plugin)")
     for member in stat_extractor.members:
         printer.p(u"- {0}".format(member.username))
         for month, spent_time in stat_extractor.spent_month_time_by_user[member.id].items():
-            printer.p(u"  - {0}: {1}".format(month, spent_time))
+            estimated_time = stat_extractor.estimated_month_time_by_user[member.id][month]
+            printer.p(u"  - {0}: {1} / {2} (diff. {3})".format(month, spent_time, estimated_time, spent_time-estimated_time))
 
     printer.newline()
 
-    printer.p(u"### Total estimated times for each user per MONTH (in units given by plugin)")
-    for member in stat_extractor.members:
-        printer.p(u"- {0}".format(member.username))
-        for month, estimated_time in stat_extractor.estimated_month_time_by_user[member.id].items():
-            printer.p(u"  - {0}: {1}".format(month, estimated_time))
-
-    printer.newline()
-
-    printer.p(u"### Total spent times for each user per WEEK (in units given by plugin)")
+    printer.p(u"### Total spent/estimated times for each user per WEEK (in units given by plugin)")
     for member in stat_extractor.members:
         printer.p(u"- {0}".format(member.username))
         for week, spent_time in stat_extractor.spent_week_time_by_user[member.id].items():
-            printer.p(u"  - {0}: {1}".format(week, spent_time))
+            estimated_time = stat_extractor.estimated_week_time_by_user[member.id][week]
+            printer.p(u"  - {0}: {1} / {2} (diff. {3})".format(week, spent_time, estimated_time, spent_time-estimated_time))
 
     printer.newline()
-
-    printer.p(u"### Total estimated times for each user per WEEK (in units given by plugin)")
-    for member in stat_extractor.members:
-        printer.p(u"- {0}".format(member.username))
-        for week, estimated_time in stat_extractor.estimated_week_time_by_user[member.id].items():
-            printer.p(u"  - {0}: {1}".format(week, estimated_time))
-
-    printer.newline()
-
-
 
 def _short_card_name(card, max_length=40):
     """
