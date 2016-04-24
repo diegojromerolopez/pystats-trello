@@ -164,7 +164,9 @@ class SummaryCreator(object):
 
         self._show_total_spent_estimated_information(stats, printer)
 
-        self._show_spent_estimated_time_by_user(stats, printer)
+        self._show_spent_estimated_time_by_user(printer)
+
+        self._show_labels_by_period(printer)
 
         printer.p(u"Charts done")
 
@@ -174,7 +176,7 @@ class SummaryCreator(object):
 
         printer.flush()
 
-
+    # Show total spent time and estimated stats
     def _show_total_spent_estimated_information(self, stats, printer):
         """
         Show total spent and estimated information
@@ -229,13 +231,16 @@ class SummaryCreator(object):
 
         printer.newline()
 
-
-    def _show_spent_estimated_time_by_user(self, stats, printer):
+    # Show spent and estimated time by user
+    def _show_spent_estimated_time_by_user(self, printer):
 
         printer.p(u"### Total spent/estimated times for each user per MONTH (in units given by plugin)")
         for member in self.stat_extractor.members:
             printer.p(u"- {0}".format(self._get_username(member)))
-            for month, spent_time in self.stat_extractor.spent_month_time_by_user[member.id].items():
+            months = self.stat_extractor.spent_month_time_by_user[member.id].keys()
+            months.sort()
+            for month in months:
+                spent_time = self.stat_extractor.spent_month_time_by_user[member.id][month]
                 estimated_time = self.stat_extractor.estimated_month_time_by_user[member.id][month]
                 printer.p(u"  - {0}: {1:.2f} / {2:.2f} (diff. {3:.2f})".format(month, spent_time, estimated_time, spent_time-estimated_time))
 
@@ -244,9 +249,42 @@ class SummaryCreator(object):
         printer.p(u"### Total spent/estimated times for each user per WEEK (in units given by plugin)")
         for member in self.stat_extractor.members:
             printer.p(u"- {0}".format(self._get_username(member)))
-            for week, spent_time in self.stat_extractor.spent_week_time_by_user[member.id].items():
+            weeks = self.stat_extractor.spent_week_time_by_user[member.id].keys()
+            weeks.sort()
+            for week in weeks:
+                spent_time = self.stat_extractor.spent_week_time_by_user[member.id][week]
                 estimated_time = self.stat_extractor.estimated_week_time_by_user[member.id][week]
                 printer.p(u"  - {0}: {1:.2f} / {2:.2f} (diff. {3:.2f})".format(week, spent_time, estimated_time, spent_time-estimated_time))
+
+        printer.newline()
+
+    # Show number of cards by period and by label
+    def _show_labels_by_period(self, printer):
+        printer.p(u"### Number of cards created by month for each label per MONTH")
+        months = self.stat_extractor.cards_by_creation_month_by_label.keys()
+        months.sort()
+        for month in months:
+            labels = self.stat_extractor.cards_by_creation_month_by_label[month];
+            printer.p(u"- {0}".format(month))
+            for label_id, cards in labels.items():
+                num_cards = len(cards)
+                label = self.stat_extractor.labels_dict[label_id]
+                label_name = self._label_name(label)
+                printer.p(u"  - {0}: {1}".format(label_name, num_cards))
+
+        printer.newline()
+
+        printer.p(u"### Number of cards created by week for each label per WEEK")
+        weeks = self.stat_extractor.cards_by_creation_week_by_label.keys()
+        weeks.sort()
+        for week in weeks:
+            labels = self.stat_extractor.cards_by_creation_week_by_label[week]
+            printer.p(u"- {0}".format(week))
+            for label_id, cards in labels.items():
+                num_cards = len(cards)
+                label = self.stat_extractor.labels_dict[label_id]
+                label_name = self._label_name(label)
+                printer.p(u"  - {0}: {1}".format(label_name, num_cards))
 
         printer.newline()
 
@@ -284,3 +322,11 @@ class SummaryCreator(object):
         if len(card_name) > max_length:
             _short_card_name += u"..."
         return _short_card_name
+
+    # Returns the name of a label
+    def _label_name(self, label):
+        # If private data is censored, take the id as
+        if self.configuration.censored:
+            return u"Label {0}".format(label.id)
+
+        return label.name.decode("utf-8")

@@ -27,6 +27,7 @@ class TrelloBoard(object):
                     self.board = board
                     self._fetch_members()
                     self._fetch_lists()
+                    self._fetch_labels()
                     self._init_cards()
                     return True
             raise RuntimeWarning(u"Board {0} was not found. Are your credentials correct?".format(self.board_name))
@@ -109,6 +110,11 @@ class TrelloBoard(object):
             if len(self.cycle_lists) <= 1:
                 raise EnvironmentError(
                     u"Development list has not been configured for board {0}".format(self.board_name))
+
+        # Fetch and initializes board card labels
+        def _fetch_labels(self):
+            self.labels = self.board.get_labels()
+            self.labels_dict = {label.id: label for label in self.labels}
 
         # Initializes the cards
         def _init_cards(self):

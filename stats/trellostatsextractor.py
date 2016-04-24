@@ -15,11 +15,17 @@ class TrelloStatsExtractor(TrelloBoard):
         self.configuration = configuration
         super(TrelloStatsExtractor, self).__init__(trello_connector, configuration)
 
+        # Spent time by period of time by user
         self.spent_month_time_by_user = {member.id: {} for member in self.members}
         self.spent_week_time_by_user = {member.id: {} for member in self.members}
 
+        # Estimated time by period of time by user
         self.estimated_month_time_by_user = {member.id: {} for member in self.members}
         self.estimated_week_time_by_user = {member.id: {} for member in self.members}
+
+        # Cards by period of time by label
+        self.cards_by_creation_month_by_label = {}
+        self.cards_by_creation_week_by_label = {}
 
     # Computes the statistics of the cards.
     # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
@@ -140,6 +146,9 @@ class TrelloStatsExtractor(TrelloBoard):
 
                 # Comments S/E
                 card.s_e = self._get_spent_estimated(card)
+
+                # Categorizing the card according to its creation datetime and labels
+                self._categorize_card_by_label_period_of_time(card)
 
                 # Card creation datetime
                 card_creation_datetimes.append(card.create_date)
@@ -330,3 +339,30 @@ class TrelloStatsExtractor(TrelloBoard):
         times["total"] = {"spent": total_spent, "estimated": total_estimated}
 
         return times
+
+    # Categorize this card by period of creation time and each one of its labels
+    def _categorize_card_by_label_period_of_time(self, card):
+        creation_datetime = card.create_date
+        month = creation_datetime.strftime("%Y-M%m")
+        week_number = "{0}-W{1}".format(creation_datetime.year, creation_datetime.isocalendar()[1])
+
+        if month not in self.cards_by_creation_month_by_label:
+            self.cards_by_creation_month_by_label[month] = {}
+
+        if week_number not in self.cards_by_creation_week_by_label:
+            self.cards_by_creation_week_by_label[week_number] = {}
+
+        # For each label we categorize this card in each one of its label and month and week number
+        for label_id in card.label_ids:
+
+            # Categorizing the card to its label and month
+            if label_id not in self.cards_by_creation_month_by_label[month]:
+                self.cards_by_creation_month_by_label[month][label_id] = []
+            self.cards_by_creation_month_by_label[month][label_id].append(card)
+
+            # Categorizing the card to its label and week number
+            if label_id not in self.cards_by_creation_week_by_label[week_number]:
+                self.cards_by_creation_week_by_label[week_number][label_id] = []
+            self.cards_by_creation_week_by_label[week_number][label_id].append(card)
+
+
