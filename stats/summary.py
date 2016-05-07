@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy
+import os
 
 from charts import trellochart
 from printer.printer import Printer
@@ -30,6 +31,9 @@ class SummaryCreator(object):
         :param trello_connector: TrelloConnector used to get information
         :param configuration: Configuration of the board (TrelloBoardConfiguration)
         """
+
+        # First thing, create output directory if it is needed
+        self._create_output_directory_if_needed()
 
         self.stat_extractor = trellostatsextractor.TrelloStatsExtractor(trello_connector=self.trello_connector, configuration=self.configuration)
         done_list = self.stat_extractor.done_list
@@ -330,3 +334,11 @@ class SummaryCreator(object):
             return u"Label {0}".format(label.id)
 
         return label.name.decode("utf-8")
+
+    # Creates output directory if needed
+    def _create_output_directory_if_needed(self):
+        output_directory = self.configuration.output_dir
+        if not os.path.exists(output_directory):
+            os.makedirs(output_directory)
+            return True
+        return False
