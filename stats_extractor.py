@@ -6,6 +6,7 @@ from auth.connector import TrelloConnector
 from stats import summary
 from stats.trelloboardconfiguration import TrelloBoardConfiguration
 
+
 if __name__ == "__main__":
 
     api_key = settings.TRELLO_API_KEY
