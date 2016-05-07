@@ -64,17 +64,17 @@ class TrelloBoardConfiguration(object):
                 # Development list
                 param = TrelloBoardConfiguration._get_single_parameter_from_line(u"DEVELOPMENT_LIST", lines[i])
                 if param:
-                    development_list = param
+                    development_list = param.decode("utf-8")
                     param = None
 
                 # Done list
                 param = TrelloBoardConfiguration._get_single_parameter_from_line(u"DONE_LIST", lines[i])
                 if param:
-                    done_list = param
+                    done_list = param.decode("utf-8")
                     param = None
 
                 # Custom workflow
-                if lines[i] == u"CUSTOM_WORKFLOWS:\n":
+                if lines[i].decode("utf-8") == u"CUSTOM_WORKFLOWS:\n":
                     i += 1
                     matches = re.match("^\-\s*(.+)$", lines[i])
                     while matches:
