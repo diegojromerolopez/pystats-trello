@@ -8,12 +8,28 @@ import settings
 from stats.debug import print_card
 from stats.trelloboard import TrelloBoard
 
-
+# Extract stats from a board
 class TrelloStatsExtractor(TrelloBoard):
 
     def __init__(self, trello_connector, configuration):
         self.configuration = configuration
         super(TrelloStatsExtractor, self).__init__(trello_connector, configuration)
+
+        # Active cards by our definition given by the lambda function
+        self.active_cards = []
+
+        # Cards that are not active
+        self.inactive_cards = []
+        self.done_inactive_cards = []
+
+        # Closed cards
+        self.closed_cards = []
+
+        # Closed done cards
+        self.closed_done_cards = []
+
+        # Done cards
+        self.done_cards = []
 
         # Spent time by period of time by user
         self.spent_month_time_by_user = {member.id: {} for member in self.members}
@@ -27,35 +43,31 @@ class TrelloStatsExtractor(TrelloBoard):
         self.cards_by_creation_month_by_label = {}
         self.cards_by_creation_week_by_label = {}
 
-    # Computes the statistics of the cards.
-    # Computes mean and standard deviation for metrics time by list, lead_time and Cycle time.
-    # The other metrics are absolute values.
-    def get_stats(self):
+        # Each one of the time of each card in each list
+        self.time_by_list = {list_.id: [] for list_ in self.lists}
 
-        def add_statistic_summary(value_list):
-            return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
+        # Forward or backward movements
+        self.forward_movements_by_list = {list_.id: 0 for list_ in self.lists}
+        self.backward_movements_by_list = {list_.id: 0 for list_ in self.lists}
+        self.movements_by_member = {member.id: {"username": member.username, "forward": 0, "backward": 0} for member in self.members}
 
-        def statistic_summary_by_list(stat_by_list):
-            stats_summary_by_list = {}
-            for list_name_, list_times_ in stat_by_list.items():
-                stats_summary_by_list[list_name_] = add_statistic_summary(list_times_)
+        # Cycle and lead times by card
+        self.cycle_time = {}
+        self.lead_time = {}
 
-            return stats_summary_by_list
+        self.last_card_creation_datetime = None
+        self.first_card_creation_datetime = None
 
-        stats = self.get_full_stats()
+        # Time this board has been alive
+        self.board_life_time = None
 
-        # Change the values for its mean and standard deviation
-        stats.update(
-            {
-                "time_by_list": statistic_summary_by_list(stats["time_by_list"]),
-            }
-        )
-
-        return stats
+        # Board last activity to computer board life time
+        self.board_last_activity = None
 
     # Compute the full stats of the board.
     # That is, it computes the concrete values for each measure.
-    def get_full_stats(self):
+    # and returns a series of useful stats additional to the concrete values stored in this object
+    def get_stats(self):
         # Function that checks if a card is still active
         card_is_active_function = self.configuration.card_is_active_function
 
@@ -66,38 +78,8 @@ class TrelloStatsExtractor(TrelloBoard):
         def card_is_done(_card):
             return _card.idList == self.done_list.id
 
-        # Each one of the time of each card in each list
-        time_by_list = {list_.id: [] for list_ in self.lists}
-
-        # Forward or backward movements
-        forward_movements_by_list = {list_.id: 0 for list_ in self.lists}
-        backward_movements_by_list = {list_.id: 0 for list_ in self.lists}
-        movements_by_member = {member.id: {"username": member.username, "forward": 0, "backward": 0} for member in self.members}
-
-        cycle_time = {}
-        lead_time = {}
-
-        # Active cards by our definition given by the lambda function
-        active_cards = []
-
-        # Cards that are not active
-        inactive_cards = []
-        done_inactive_cards = []
-
-        # Closed cards
-        closed_cards = []
-
-        # Closed done cards
-        closed_done_cards = []
-
-        # Done cards
-        done_cards = []
-
         # We store card_creation_datetimes to extract min datetime
         card_creation_datetimes = []
-
-        # Board last activity to computer board life time
-        board_last_activity = None
 
         num_cards = len(self.cards)
         i = 1
@@ -105,10 +87,10 @@ class TrelloStatsExtractor(TrelloBoard):
 
             # Test if the card is closed
             if card.closed:
-                closed_cards.append(card)
+                self.closed_cards.append(card)
                 # If the card is closed, test if was closed in the "done" list
                 if card_is_done(card):
-                    closed_done_cards.append(card)
+                    self.closed_done_cards.append(card)
 
             # Custom filter for only considering cards we want. By default it should be "not card.closed", but we
             # give programmers the option to customize this parameter
@@ -121,28 +103,28 @@ class TrelloStatsExtractor(TrelloBoard):
                 if card_is_done(card):
                     #  Lead time (time between creation in board to reaching "Done" state)
                     card.lead_time = sum([list_stats["time"] for list_id, list_stats in card.stats_by_list.items()])
-                    lead_time[card.id] = card.lead_time
+                    self.lead_time[card.id] = card.lead_time
                     # Cycle time (time between development and reaching "Done" state)
                     card.cycle_time = sum(
                         [list_stats["time"] if list_id in self.cycle_lists_dict else 0 for list_id, list_stats in card.stats_by_list.items()]
                     )
-                    cycle_time[card.id] = card.cycle_time
-                    done_cards.append(card)
+                    self.cycle_time[card.id] = card.cycle_time
+                    self.done_cards.append(card)
 
                 # Add this card stats to each global stat
                 for list_ in self.lists:
                     list_id = list_.id
                     card_stats_by_list = card.stats_by_list[list_id]
-                    time_by_list[list_id].append(card_stats_by_list["time"])
-                    forward_movements_by_list[list_id] += card_stats_by_list["forward_moves"]
-                    backward_movements_by_list[list_id] += card_stats_by_list["backward_moves"]
+                    self.time_by_list[list_id].append(card_stats_by_list["time"])
+                    self.forward_movements_by_list[list_id] += card_stats_by_list["forward_moves"]
+                    self.backward_movements_by_list[list_id] += card_stats_by_list["backward_moves"]
 
                 # Forward and backward movements by member of the card
                 card_forward_movements = sum([list_stats["forward_moves"] for list_id, list_stats in card.stats_by_list.items()])
                 card_backward_movements = sum([list_stats["backward_moves"] for list_id, list_stats in card.stats_by_list.items()])
                 for idMember in card.member_ids:
-                    movements_by_member[idMember]["backward"] += card_backward_movements
-                    movements_by_member[idMember]["forward"] += card_forward_movements
+                    self.movements_by_member[idMember]["backward"] += card_backward_movements
+                    self.movements_by_member[idMember]["forward"] += card_forward_movements
 
                 # Comments S/E
                 card.s_e = self._get_spent_estimated(card)
@@ -154,61 +136,75 @@ class TrelloStatsExtractor(TrelloBoard):
                 card_creation_datetimes.append(card.create_date)
 
                 # Getting the last activity in the board
-                if board_last_activity is None or board_last_activity < card.date_last_activity:
-                    board_last_activity = card.date_last_activity
+                if self.board_last_activity is None or self.board_last_activity < card.date_last_activity:
+                    self.board_last_activity = card.date_last_activity
 
                 # Compute custom workflows (if needed)
                 card.custom_workflow_times = self._get_custom_workflow_times(card)
 
                 # Add this card to active cards
-                active_cards.append(card)
+                self.active_cards.append(card)
 
             # Inactive cards
             else:
-                inactive_cards.append(card)
+                self.inactive_cards.append(card)
                 if card_is_done(card):
-                    done_inactive_cards.append(card)
+                    self.done_inactive_cards.append(card)
 
             i += 1
 
         now = datetime.datetime.now(settings.TIMEZONE)
-        first_card_creation_datetime = min(card_creation_datetimes)
-        last_card_creation_datetime = max(card_creation_datetimes)
-        board_life_time = (board_last_activity - first_card_creation_datetime).total_seconds()
+        self.first_card_creation_datetime = min(card_creation_datetimes)
+        self.last_card_creation_datetime = max(card_creation_datetimes)
+        self.board_life_time = (self.board_last_activity - self.first_card_creation_datetime).total_seconds()
 
         stats = {
             "lists": self.lists,
             "cards": self.cards,
-            "active_card_stats_by_list": {card.id: card.stats_by_list for card in active_cards},
-            "active_card_spent_estimated_times": {card.id: card.s_e for card in active_cards},
-            "active_cards": active_cards,
-            "done_inactive_cards": done_inactive_cards,
-            "inactive_cards": inactive_cards,
-            "closed_cards": closed_cards,
-            "closed_done_cards": closed_done_cards,
-            "done_cards": done_cards,
-            "done_cards_per_hour": len(done_cards) / (board_life_time/60.0),
-            "done_cards_per_day": len(done_cards)/(board_life_time/3600.0),
-            "board_life_time": board_life_time / 60.0,
-            "board_last_activity": board_last_activity,
-            "last_card_creation": last_card_creation_datetime,
-            "last_card_creation_ago": (now - last_card_creation_datetime).total_seconds(),
-            "time_by_list": time_by_list,
-            "backward_movements_by_list": backward_movements_by_list,
-            "movements_by_user": movements_by_member,
-            "forward_movements_by_list": forward_movements_by_list,
+            "active_card_stats_by_list": {card.id: card.stats_by_list for card in self.active_cards},
+            "active_card_spent_estimated_times": {card.id: card.s_e for card in self.active_cards},
+            "active_cards": self.active_cards,
+            "done_inactive_cards": self.done_inactive_cards,
+            "inactive_cards": self.inactive_cards,
+            "closed_cards": self.closed_cards,
+            "closed_done_cards": self.closed_done_cards,
+            "done_cards": self.done_cards,
+            "done_cards_per_hour": len(self.done_cards) / (self.board_life_time/60.0),
+            "done_cards_per_day": len(self.done_cards)/(self.board_life_time/3600.0),
+            "board_life_time": self.board_life_time / 60.0,
+            "board_last_activity": self.board_last_activity,
+            "last_card_creation": self.last_card_creation_datetime,
+            "last_card_creation_ago": (now - self.last_card_creation_datetime).total_seconds(),
+            "time_by_list": self._get_time_summary_by_list(),
+            "backward_movements_by_list": self.backward_movements_by_list,
+            "movements_by_user": self.movements_by_member,
+            "forward_movements_by_list": self.forward_movements_by_list,
             "lead_time": {
-                "values": lead_time,
-                "avg": numpy.mean(lead_time.values()),
-                "std_dev": numpy.std(lead_time.values(), axis=0)
+                "values": self.lead_time,
+                "avg": numpy.mean(self.lead_time.values()),
+                "std_dev": numpy.std(self.lead_time.values(), axis=0)
             },
             "cycle_time": {
-                "values": cycle_time,
-                "avg": numpy.mean(cycle_time.values()),
-                "std_dev": numpy.std(cycle_time.values(), axis=0)
+                "values": self.cycle_time,
+                "avg": numpy.mean(self.cycle_time.values()),
+                "std_dev": numpy.std(self.cycle_time.values(), axis=0)
             },
         }
         return stats
+
+    # Get a summary of the time each task has been in each list
+    def _get_time_summary_by_list(self):
+        def add_statistic_summary(value_list):
+            return {"values": value_list, "avg": numpy.mean(value_list), "std_dev": numpy.std(value_list, axis=0)}
+
+        def statistic_summary_by_list(stat_by_list):
+            stats_summary_by_list = {}
+            for list_name_, list_times_ in stat_by_list.items():
+                stats_summary_by_list[list_name_] = add_statistic_summary(list_times_)
+
+            return stats_summary_by_list
+
+        return statistic_summary_by_list(self.time_by_list)
 
     # Get specific workflow times
     def _get_custom_workflow_times(self, card):
