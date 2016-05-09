@@ -18,6 +18,8 @@ def get_graphics(stats, stat_extractor):
 
     configuration = stat_extractor.configuration
     board_name = configuration.board_name
+    if configuration.censored:
+        board_name = stat_extractor.board.id
 
     # Time by list
     chart_title = u"Average time for all board cards by list for {0}".format(board_name)
@@ -50,18 +52,18 @@ def get_graphics(stats, stat_extractor):
     # Forwards - Backwards per user
     chart_title = u"Forwarded - Pushed back tasks per user {0}".format(board_name)
     mov_difference_by_user_file_path = _get_chart_path(u"diff_movements_by_user", configuration)
-    mov_difference_by_user_chart = member_chart(chart_title, mov_difference_by_user_file_path, stats["movements_by_user"], stat_extractor.members, key="difference")
+    mov_difference_by_user_chart = member_chart(chart_title, stat_extractor, mov_difference_by_user_file_path, stats["movements_by_user"], stat_extractor.members, key="difference")
 
     # Forwards per user
     chart_title = u"Forward movement on tasks per user {0}".format(board_name)
     forwarded_by_user_file_path = _get_chart_path(u"forward_movements_by_user", configuration)
-    forwarded_by_user_chart = member_chart(chart_title, forwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
+    forwarded_by_user_chart = member_chart(chart_title, stat_extractor, forwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
                  key="forward")
 
     # Backwards per user
     chart_title = u"Backward movements on tasks per user {0}".format(board_name)
     backwarded_by_user_file_path = _get_chart_path(u"backward_movements_by_user", configuration)
-    backwarded_by_user_file_chart = member_chart(chart_title, backwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
+    backwarded_by_user_file_chart = member_chart(chart_title, stat_extractor, backwarded_by_user_file_path, stats["movements_by_user"], stat_extractor.members,
                  key="backward")
 
     # Spent/Estimated time per user per month
@@ -118,7 +120,7 @@ def number_by_list_chart(chart_title, lists, stats, measurement):
     return line_chart
 
 
-def member_chart(chart_title, file_path, stats_by_member, members, key="forward"):
+def member_chart(chart_title, stat_extractor, file_path, stats_by_member, members, key="forward"):
     by_user_chart_ = pygal.HorizontalBar(title=chart_title, legend_at_bottom=True)
     for member in members:
         member_name = member.username.decode("utf-8")
@@ -129,8 +131,15 @@ def member_chart(chart_title, file_path, stats_by_member, members, key="forward"
             value = stats_by_member[member.id]["forward"] - stats_by_member[member.id]["backward"]
         else:
             value = stats_by_member[member.id][key]
-        by_user_chart_.add(u"{0}".format(member_name), value)
-        by_user_chart_.render_to_png(file_path)
+
+        # Allow possibility to censure username
+        member_chart_name = member_name
+        if stat_extractor.configuration.censored:
+            member_chart_name = member.id
+
+        by_user_chart_.add(u"{0}".format(member_chart_name), value)
+
+    by_user_chart_.render_to_png(file_path)
     return by_user_chart_
 
 
@@ -164,6 +173,8 @@ def spent_estimated_time_chart_by_user(chart_title, stat_extractor, file_path, p
     s_e_by_user_chart_ = pygal.Line(title=chart_title, legend_at_bottom=False)
     for member in stat_extractor.members:
         member_name = member.username.decode("utf-8")
+        if stat_extractor.configuration.censored:
+            member_name = member.id
         if periods:
             if measure == "spent":
                 s_e_by_user_chart_.add(u"{0}".format(member_name), [spent_time_by_user[member.id].get(time) for time in periods])
