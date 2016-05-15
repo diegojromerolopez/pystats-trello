@@ -154,6 +154,12 @@ See output example file in [example result file](result-examples/results-for-boa
 
 ![Average time by list for board cards](result-examples/forward_movements_by_list.png)
 
+# TODO
+- Mark blocked tasks using card comment: **Blocked by URL of blocking task**.
+- Task hierarchy using card comments:
+  - **Parent of URL to children task**.
+  - **Child of URL to parent task**.
+
 
 # Questions? Suggestions?
 
