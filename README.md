@@ -1,3 +1,4 @@
+
 # pystats-trello
 
 Statistics and charts for Trello boards.
@@ -7,6 +8,19 @@ These small utilities gives you the functionality needed to extract some metric 
 # Requirements
 
 See requirements.txt.
+
+Some system packages are required:
+
+## Ubuntu
+
+Write this in your terminal:
+
+```shell
+$ sudo apt-get install python-dev libxml2-dev libxslt1-dev zlib1g-dev libffi-dev
+```
+
+## MacOS
+TODO
 
 
 # Implemented Kanban Metrics
